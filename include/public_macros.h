@@ -2,9 +2,13 @@
 #define TUPLE_AT_0(x, ...) x
 #define TUPLE_AT_1(x,y,...) y
 #define TUPLE_AT_2(x,y,z,...) z
+#define TUPLE_AT_3(x,y,z,a,...) a
+#define TUPLE_AT_4(x,y,z,a,b,...) b
 #define CHECK0(...) TUPLE_AT_0(__VA_ARGS__, UNUSED)
 #define CHECK1(...) TUPLE_AT_1(__VA_ARGS__, UNUSED)
 #define CHECK2(...) TUPLE_AT_2(__VA_ARGS__, UNUSED)
+#define CHECK3(...) TUPLE_AT_3(__VA_ARGS__, UNUSED)
+#define CHECK4(...) TUPLE_AT_4(__VA_ARGS__, UNUSED)
 
 // for recursion by deferred expression
 // TODO: need to see if this can replace the constant need to define MACRO_B vs MACR_A in iteration
@@ -194,7 +198,8 @@ IIF(BITAND(IS_COMPARABLE(x))(IS_COMPARABLE(y)) ) \
 // found in instance's namespace. add member to namespace and register found
 #define G_SEARCH_HIER_INST_1 , , G_SEARCH_INST_FOUND
 // print result and start pass-through
-#define G_SEARCH_INST_FOUND(namespace, member, class, next) (class)namespace G_SEARCH_PASS_A(
+//#define G_SEARCH_INST_FOUND(namespace, member, class, next) (class.)namespace G_SEARCH_PASS_A(
+#define G_SEARCH_INST_FOUND(namespace, member, class, next) (inst, class)namespace G_SEARCH_PASS_A(
 
 // not found in class's namespace
 #define G_SEARCH_HIER_CLASS_0
@@ -202,7 +207,8 @@ IIF(BITAND(IS_COMPARABLE(x))(IS_COMPARABLE(y)) ) \
 #define G_SEARCH_HIER_CLASS_1 , G_SEARCH_CLASS_FOUND
 // print result and start pass-through
 // TODO: this is going to have to get fixed depending on how class types are accessed. Specifically, the _(cast to class) cannot have * or parentheses or reserved characters before it. Might have to separate off (member), reprocess depending on instance or class found and then re-append member
-#define G_SEARCH_CLASS_FOUND(namespace, member, class, next) (_(cast to class)class)namespace G_SEARCH_PASS_A(
+//#define G_SEARCH_CLASS_FOUND(namespace, member, class, next) (class.)namespace G_SEARCH_PASS_A(
+#define G_SEARCH_CLASS_FOUND(namespace, member, class, next) (cl, class)namespace G_SEARCH_PASS_A(
 
 #define G_SEARCH_PASS_END , G_SEARCH_PASS_END_END
 #define G_SEARCH_PASS_A(class) CHECK1(G_SEARCH_PASS_##class, G_SEARCH_PASS_NEXT)(class, B)
@@ -226,42 +232,49 @@ IIF(BITAND(IS_COMPARABLE(x))(IS_COMPARABLE(y)) ) \
 #define G_SEARCH_HIER(member, guide) G_SEARCH_HIER_A( , member, guide END)
 
 // double EXPAND(OBSTRUCT(IIF)) needed to get around painting nested IIF conditions blue
-#define BACKTRACK_NAMESPACE_A(namespace, next_class) EXPAND(OBSTRUCT(IIF)(SEQ_IS_EMPTY(namespace)))(ERASE, IIF EMPTY()(IS_PARENT EMPTY()(next_class, SEQ_1ST(namespace)))(CHECK0, BACKTRACK_NAMESPACE_REMOVE))(namespace, next_class, B)
-#define BACKTRACK_NAMESPACE_B(namespace, next_class) EXPAND(OBSTRUCT(IIF)(SEQ_IS_EMPTY(namespace)))(ERASE, IIF EMPTY()(IS_PARENT EMPTY()(next_class, SEQ_1ST(namespace)))(CHECK0, BACKTRACK_NAMESPACE_REMOVE))(namespace, next_class, A)
+#define BACKTRACK_NAMESPACE_A(namespace, next_class) EXPAND(OBSTRUCT(IIF)(SEQ_IS_EMPTY(namespace)))(ERASE, IIF EMPTY()(IS_PARENT EMPTY()(next_class, CHECK1(SEQ_1ST(namespace))))(CHECK0, BACKTRACK_NAMESPACE_REMOVE))(namespace, next_class, B)
+#define BACKTRACK_NAMESPACE_B(namespace, next_class) EXPAND(OBSTRUCT(IIF)(SEQ_IS_EMPTY(namespace)))(ERASE, IIF EMPTY()(IS_PARENT EMPTY()(next_class, CHECK1(SEQ_1ST(namespace))))(CHECK0, BACKTRACK_NAMESPACE_REMOVE))(namespace, next_class, A)
 #define BACKTRACK_NAMESPACE_REMOVE(namespace, next_class, next) BACKTRACK_NAMESPACE_NEXT(ERASE namespace, next_class, next)
 #define BACKTRACK_NAMESPACE_NEXT(namespace, next_class, next) BACKTRACK_NAMESPACE_##next(namespace, next_class)
 #define BACKTRACK_NAMESPACE(namespace, class, next_class) BACKTRACK_NAMESPACE_A(namespace, next_class)
 
-#define PREPEND_CLASS(namespace, class, next_class) (class)namespace
+#define PREPEND_CLASS(namespace, class, next_class) (inst, class)namespace
 #define PREPROC_NEXT_CLASS(namespace, class, next_class) IIF(IS_PARENT(next_class, class))(PREPEND_CLASS, BACKTRACK_NAMESPACE)(namespace, class, next_class)
 
 // when ready, insert into G_SEARCH_HIER_NEXT as: MOD_NAMESPACE(G_SEARCH_HIER_##next, namespace, member, class,
 #define MOD_NAMESPACE_A(next_func, namespace, member, class, next_class) next_func(PREPROC_NEXT_CLASS(namespace, class, next_class), member, next_class)
 #define MOD_NAMESPACE_B(next_func, namespace, member, class, next_class) next_func(PREPROC_NEXT_CLASS(namespace, class, next_class), member, next_class)
 
-// reverse a sequence
-#define SEQ_REV_A(seq_out, val) IIF(IS_END(val))(SEQ_REV_RETURN, SEQ_REV_NEXT)(seq_out, val, B)
-#define SEQ_REV_B(seq_out, val) IIF(IS_END(val))(SEQ_REV_RETURN, SEQ_REV_NEXT)(seq_out, val, A)
-#define SEQ_REV_NEXT(seq_out, val, next) SEQ_REV_##next((val)seq_out, 
-#define SEQ_REV_RETURN(seq_out, val, B) seq_out
-#define SEQ_REV_0(seq_out, guide) SEQ_REV_A(seq_out, guide END)
+// reverse a sequence, specific to reversing the class hierarchy
+#define SEQ_REV_A(seq_out, type, val) IIF(IS_END(val))(SEQ_REV_RETURN, SEQ_REV_NEXT)(seq_out, type, val, B)
+#define SEQ_REV_B(seq_out, type, val) IIF(IS_END(val))(SEQ_REV_RETURN, SEQ_REV_NEXT)(seq_out, type, val, A)
+#define SEQ_REV_NEXT(seq_out, type, val, next) SEQ_REV_##next((type, val)seq_out, 
+#define SEQ_REV_RETURN(seq_out, type, val, B) seq_out
+#define SEQ_REV_0(seq_out, guide) SEQ_REV_A(seq_out, guide END, END)
 #define SEQ_REV_(seq) SEQ_REV_0( , SEQ_TO_GUIDE(seq))
 #define SEQ_REV(seq) IIF(SEQ_IS_EMPTY(seq))( , SEQ_REV_)(seq)
 
 // this is not a generic join since it cannot accept a '.' delimiter. additionally, it formats the classes for use with OOP_GET
-#define SEQ_JOIN_A(joined, val) IIF(IS_END(val))(SEQ_JOIN_RETURN, SEQ_JOIN_NEXT)(joined, val, B)
-#define SEQ_JOIN_B(joined, val) IIF(IS_END(val))(SEQ_JOIN_RETURN, SEQ_JOIN_NEXT)(joined, val, A)
-#define SEQ_JOIN_NEXT_(joined, val) joined.val
-#define SEQ_JOIN_NEXT(joined, val, next) SEQ_JOIN_##next(SEQ_JOIN_NEXT_(joined, TYPE_NAME(val)), 
-#define SEQ_JOIN_RETURN(joined, val, next) joined
-#define SEQ_JOIN_0(joined, guide) SEQ_JOIN_A(joined, guide END)
-#define SEQ_JOIN_(seq) SEQ_JOIN_0(TYPE_NAME(SEQ_1ST(seq)), SEQ_TO_GUIDE(ERASE seq))
+#define SEQ_JOIN_inst .
+#define SEQ_JOIN_cl .class__->
+#define SEQ_JOIN_A(joined, type, val) IIF(IS_END(val))(SEQ_JOIN_RETURN, SEQ_JOIN_NEXT)(joined, type, val, B)
+#define SEQ_JOIN_B(joined, type, val) IIF(IS_END(val))(SEQ_JOIN_RETURN, SEQ_JOIN_NEXT)(joined, type, val, A)
+#define SEQ_JOIN_NEXT_(joined, type, val) joined val CAT(SEQ_JOIN_, type)
+#define SEQ_JOIN_NEXT(joined, type, val, next) SEQ_JOIN_##next(SEQ_JOIN_NEXT_(joined, type, TYPE_NAME(val)), 
+#define SEQ_JOIN_RETURN(joined, type, val, next) joined
+#define SEQ_JOIN_0(joined, guide) SEQ_JOIN_A(joined, guide END, END)
+#define SEQ_JOIN__(type, class) TYPE_NAME(class) CAT(SEQ_JOIN_, type)
+#define SEQ_JOIN_SPLIT(x, y) (x, y),
+#define SEQ_JOIN_1ST(seq) CHECK0(SEQ_JOIN_SPLIT seq)
+#define SEQ_JOIN_(seq) SEQ_JOIN_0(SEQ_JOIN__ SEQ_JOIN_1ST(seq), SEQ_TO_GUIDE(ERASE seq))
 #define SEQ_JOIN(seq) IIF(SEQ_IS_EMPTY(seq))(ERASE, SEQ_JOIN_)(seq)
 
-#define OOP_GET_(class, member) SEQ_JOIN(SEQ_REV(G_SEARCH_HIER(member, OOP_CLASS_G_PARENT_##class)))
-//#define OOP_GET(class, inst, member) inst IIF(IS_IN_SEQ(OOP_MEMBERS_T_##class, member))(ERASE, OOP_GET_)(class, member) .member
-//#define OOP_GET(class, inst, member) IIF(IS_IN_SEQ(CHECK0(CAT(OOP_MEMBERS_T_, class)), member))(inst ERASE, CAT(inst, ACCESSOR) OOP_GET_)(class, member) CAT(ACCESSOR, member)
-#define OOP_GET(class, inst, member) IIF(IS_IN_SEQ(CHECK0(CAT(OOP_MEMBERS_T_, class)), member))((inst) ERASE, (inst). OOP_GET_)(class, member) .member
+#define OOP_GET_BASE_1 , , , 
+#define OOP_GET_BASE_CLASS_1 , 
+#define OOP_GET_(class, member) SEQ_JOIN(SEQ_REV(G_SEARCH_HIER(member, OOP_CLASS_G_PARENT_##class)))//SEQ_JOIN(SEQ_REV(G_SEARCH_HIER(member, OOP_CLASS_G_PARENT_##class)))
+//#define OOP_GET(class, inst, member) IIF(IS_IN_SEQ(CHECK0(CAT(OOP_MEMBERS_T_, class)), member))((inst) ERASE, (inst). OOP_GET_)(class, member) .member
+//#define OOP_GET(class, inst, member) CHECK4(CAT(OOP_GET_BASE_, IS_IN_SEQ(CHECK0(CAT(OOP_MEMBERS_T_, class)), member)), (inst) ERASE, CAT(OOP_GET_BASE_CLASS_, IS_IN_SEQ(CHECK1(CAT(OOP_MEMBERS_T_, class)), member)), (*((inst).class__)) ERASE, (inst). OOP_GET_)(class, member) .member
+#define OOP_GET(class, inst, member) CHECK4(CAT(OOP_GET_BASE_, IS_IN_SEQ(CHECK0(CAT(OOP_MEMBERS_T_, class)), member)), (inst).ERASE, CAT(OOP_GET_BASE_CLASS_, IS_IN_SEQ(CHECK1(CAT(OOP_MEMBERS_T_, class)), member)), (inst).class__-> ERASE, (inst). OOP_GET_)(class, member)member
 #define OOP_SUPER1(A) A. TYPE_NAME(G_CAT1(, G_1ST(OOP_CLASS_G_PARENT_##A)))
 #define OOP_SUPER2(A, B) A. TYPE_NAME(B)
 #define OOP_SUPER(...) CHECK2(__VA_ARGS__, OOP_SUPER2, OOP_SUPER1)(__VA_ARGS__)

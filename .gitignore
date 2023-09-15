@@ -51,6 +51,8 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-# work folders
-.vs_code/
+# work in progress folders
+.vscode/
 workbench/
+*.h_orig
+*.c_orig
