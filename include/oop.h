@@ -235,10 +235,10 @@ OOP_NEWLINE \
 static void CAT(name,__DEL__)(name * inst); \
 \
 \
-CLASS_MANGLE(name) OOP_CLASS_INST(name) = {sizeof(name), CAT(name,__NEW__), CAT(name,__INIT__), CAT(name,__DEL__)}; \
+static CLASS_MANGLE(name) OOP_CLASS_INST(name) = {CAT(name,__NEW__), CAT(name,__INIT__), CAT(name,__DEL__)}; \
 OOP_NEWLINE \
 OOP_NEWLINE \
-name name##_INIT = {&OOP_CLASS_INST(name), 0};\
+static name name##_INIT = {&OOP_CLASS_INST(name), 0};\
 OOP_NEWLINE \
 \
 \
@@ -277,7 +277,6 @@ OOP_NEWLINE \
 #define CLASS(name, seq) \
 CLASS_(\
     name, \
-    CLASS_MEMBER(sizeof(name), size_t, size) \
     CLASS_FUNCTION(NULL, name *, new, ) \
     CLASS_FUNCTION(NULL, void, init, ) \
     CLASS_FUNCTION(NULL, void, del, name *) \

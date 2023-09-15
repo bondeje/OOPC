@@ -11,8 +11,9 @@ This is largely a set of macros and meta data structures written in the C prepro
 
 Example class definition:
 ```
-// class_definitions.h
-INCLUDE OOP
+// defs.h
+#include <oop.h>
+INCLUDE_OOP
 
 // builds a struct 'array' with a double array of size 10, 'arr' with 10 stored in member 'n' and current size in size
 CLASS(array, 
@@ -35,7 +36,7 @@ CLASS(stack,
 )
 
 // arrays_stacks.c
-#include "arrays_stacks.h"
+#include "classes.h"
 // returns 0 if successful, 1 if stack is full
 int push(stack * st, double val) {
     if (OOP_GET(stack, *st, size) < OOP_GET(stack, *st, n)) {
@@ -54,19 +55,21 @@ int pop(double * out, stack * st) {
     return 1;
 }
 
-// class_definitions.h pre-processed to file 'arrays_stacks.h'
+// defs.h pre-processed to file 'classes.h'
 
 // main.c
 #include <stdio.h>
-#include "arrays_stacks.h"
+#include "classes.h"
 
 int main() {    
     stack st;
     __INIT__(stack)(&st);
     OOP_GET(stack, st, n) = 10; // still necessary. Will overload init later
+    OOP_GET(stack, st, push) = push;
+    OOP_GET(stack, st, pop) = pop;
 
     for (unsigned int i = 0; i < 11; i++) {
-        printf("result of push at %u: %d\n", OOP_GET(stack, st, push)(&st, 1.0 * i));
+        printf("result of push at %u: %d\n", i, OOP_GET(stack, st, push)(&st, 1.0 * i));
     }
 
     return 0;
