@@ -1,24 +1,31 @@
-#include <oop.h>
+#include <oopc.h>
 
 INCLUDE_OOP
 
+CLASS(I,
+    FUNCTION(NULL, double, to_dbl, void *)
+)
+
 CLASS(A,\
-MEMBER(int, A0)\
+    MEMBER(int, A0)\
 )
 
 CLASS(B,\
-PARENT(A)\
-CLASS_MEMBER(0, int, n)\
-MEMBER(float, B0)\
+    EXTENDS(A)\
+    CLASS_MEMBER(int, n, 0)\
+    MEMBER(float, B0)\
 )
 
 CLASS(C,\
-PARENT(A)\
-MEMBER(double, C0)\
+    EXTENDS(A)\
+    MEMBER(double, C0)\
 )
 
+double size_t_to_dbl_x2p5(void * pD);
+
 CLASS(D,\
-PARENT(B)
-PARENT(C)
-MEMBER(size_t, D0)
+    EXTENDS(B)
+    EXTENDS(C)
+    IMPLEMENTS(I, to_dbl, size_t_to_dbl_x2p5)
+    MEMBER(size_t, D0)
 )

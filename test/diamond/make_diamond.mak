@@ -9,7 +9,7 @@ DEFS = defs.h
 TARGET_HEADER = classes.h
 TARGET_HEADER_FULL = $(current_dir)/$(TARGET_HEADER)
 
-PRE_CFLAGS = -E -CC -P
+PRE_CFLAGS = -E -CC -P -DOOPC
 PRE_IFLAGS = -I../../include/
 
 CLEAN_SCRIPT = 
@@ -30,7 +30,9 @@ else
 	DEL_FILE = del /f
 endif
 
-all: build_classes clean_sentinels build clean
+all: build_classes clean_sentinels build 
+
+#clean
 
 build_classes: 
 	$(CC) $(PRE_CFLAGS) $(PRE_IFLAGS) $(DEFS) -o $(TARGET_HEADER_FULL)

@@ -1,284 +1,246 @@
-#include "tuple_to_seq.h"
-// probably or definitely shared
-//
+// general notes on data structures
+// macros beginning with T manipulate tuples
+// macros beginning with S manipulate sequence inputs
+// macros beginning with G manipulate guide inputs
+
+#include <config.h>
+#include <directives.h>
+
+// Generic meta-programming macros
+#include <pptuples.h>
+
+/* miscellaneous */
 #define HASH_LIT #
-#define CAT(A, B) CAT_(A, B)
-#define CAT_(A, B) A##B
-#define CATD(A, B, delim) CATD_(A, B, delim)
-#define CATD_(A, B, delim) A##delim##B
-#define EVAL(func, args) func(args)
-#define EVAL2(func, arg1, args) func(arg1, arg2)
-#define EVALVARG(func, ...) func(__VA_ARGS__)
-#define EMPTY() 
+#define INSERT_COMMA_0(...) , 0, 
+#define INSERT_COMMA_1(...) , 1, 
+#define INSERT_COMMA() ,
+/* stringify */
+#define STRINGIFY_(s) #s
+#define STRINGIFY(s) STRINGIFY_(s)
+
+/* concatenations */
+// output with a delimiter between
+#define CATD(left, right, delim) CATD_(left, right, delim)
+#define CATD_(left, right, delim) left##delim##right
+// output with a space between
+#define CATS(left, right) CATS_(left, right)
+#define CATS_(left, right) left right
+// concatenate with a comma space
+#define CATC(left, right) CATC_(left, right)
+#define CATC_(left, right) left, right
+#define CAT(left, right) CAT_(left, right)
+#define CAT_(left, right) left##right
+
+/* parenthesis manipulation and checking */
 #define LPAREN() (
 #define RPAREN() )
-#define ECHO(x) x
-#define EXPAND(...) __VA_ARGS__
-//#define ACCESSOR OOP_ACCESSOR
+// only works if x does not start with a set of '()'. Worse if x is a sequence of (...)x for any x, results in '1'
+#define IS_PAREN(x) T_INSPECT_1(IS_PAREN_ x, 0)
+#define IS_PAREN_(x) CATC(x, 1) 
 
-#ifndef NO_STDCLIB
-    #define OOP_NO_MALLOC(name) (name *) malloc(sizeof(name))
-    #define OOP_NO_FREE(name) free(name)
-    #define INCLUDE_STDLIB INCLUDE <stdlib.h>
-#else
-    #define OOP_NO_MALLOC(name) NULL
-    #define OOP_NO_FREE(name) do {} while (0)
-    #define INCLUDE_STDLIB 
-#endif
+/* recursion utilities */
+#define SPLIT(fmacro) fmacro EMPTY()
+#define OBSTRUCT(...) __VA_ARGS__ SPLIT(EMPTY)()
+#define PASS_ARGS(...) __VA_ARGS__
+#define PASS_ARGS_(...) __VA_ARGS__
+#define ERASE_ARGS(...)
+#define ERASE_ARGS_(...)
+#define EMPTY() 
+#define FEVAL(func, ...) func(__VA_ARGS__)
+#define FARGEVAL(func, args) func args
 
-#ifndef NDEBUG
-    #define INCLUDE_STDIO INCLUDE <stdio.h>
-#else
-    #define INCLUDE_STDIO 
-#endif
+// check if this is actually used
+#define OOP_OR(A, B) CATD(CAT(OOP_OR_, A), B, _)
+#define OOP_OR_1_ 1
+#define OOP_OR__1 1
+#define OOP_OR_0_ 0
+#define OOP_OR__0 0
+#define OOP_OR_1_1 1
+#define OOP_OR_0_1 1
+#define OOP_OR_1_0 1
+#define OOP_OR_0_0 0
 
-// directives
-#define INCLUDE HASH_LIT include
-#define DEFINE HASH_LIT define
-#define IF HASH LIT if
-#define IFNDEF HASH_LIT ifndef 
-#define IFDEF HASH_LIT ifdef
-#define ENDIF HASH_LIT endif
-#define ELSE HASH_LIT else
+// check if this is actually used
+#define OOP_AND(A, B) CATD(CAT(OOP_AND_, A), B, _)
+#define OOP_AND_0_ 0
+#define OOP_AND_1_ 0
+#define OOP_AND__1 0
+#define OOP_AND__0 0
+#define OOP_AND_1_1 1
+#define OOP_AND_0_1 0
+#define OOP_AND_1_0 0
+#define OOP_AND_0_0 0
 
-/* sequence actions */
-#define SEQ_TERM(...) SEQ_TERM_(__VA_ARGS__)
-#define SEQ_TERM_(...) __VA_ARGS__##_TERM
+// check if this is actually used
+#define OOP_XOR(A, B) CATD(CAT(OOP_XOR_, A), B, _)
+#define OOP_XOR__1 1
+#define OOP_XOR_1_ 1
+#define OOP_XOR_0_ 0
+#define OOP_XOR__0 0
+#define OOP_XOR_1_1 0
+#define OOP_XOR_0_1 1
+#define OOP_XOR_1_0 1
+#define OOP_XOR_0_0 0
 
-/* transform a sequence to a guide*/
-#define SEQ_TO_GUIDE_A(...) __VA_ARGS__ RPAREN EMPTY()()SEQ_TO_GUIDE_B
-#define SEQ_TO_GUIDE_B(...) __VA_ARGS__ RPAREN EMPTY()()SEQ_TO_GUIDE_A
-#define SEQ_TO_GUIDE_A_TERM
-#define SEQ_TO_GUIDE_B_TERM
-#define SEQ_TO_GUIDE(seq) SEQ_TERM(SEQ_TO_GUIDE_A seq)
+// OOP_NOT is definitely used
+#define OOP_NOT(b) CAT(OOP_NOT_, b)
+#define OOP_NOT_0 1
+#define OOP_NOT_1 0
 
-#define TYPE_NAME(name) name##__
+/* comparisons */
+#define IS_COMPARABLE(x) IS_PAREN( CAT(OOP_MEMBER_, x)(()))
+#define OOP_IF(cond) CATD(OOP_IF_, cond, )
+#define OOP_IF_0(true_, false_) false_
+#define OOP_IF_1(true_, false_) true_
+#define OOP_ELSE_IF(cond) CAT(OOP_ELSE_IF_, cond)
+#define OOP_ELSE_IF_0(true_, false_) false_ 
+#define OOP_ELSE_IF_1(true_, false_) true_
+#define EQUAL(x, y) OOP_NOT(NOT_EQUAL(x, y))
+#define COMPARE_(x, y) IS_PAREN(CAT(OOP_MEMBER_,x)( CAT(OOP_MEMBER_, y))(()))
+#define NOT_EQUAL(x, y)                             \
+OOP_IF(OOP_AND(IS_COMPARABLE(x), IS_COMPARABLE(y)) )\
+(                                                   \
+   COMPARE_,                                        \
+   1 ERASE_ARGS                                     \
+)(x, y)
 
-#define MEMBER_2(type, name) (MEMBER_TYPE, (type name;, type, name, sizeof(type)))
-#define MEMBER_3(type, name, array_size) (MEMBER_TYPE, (type name[array_size];, type, name, array_size * sizeof(type)))
-#define MEMBER(...) CAT(MEMBER, VARIADIC_SIZE(__VA_ARGS__))(__VA_ARGS__)
+// for switch statement, turn tuple into seqence, processing each element
+// IF_CASE iterates through a sequence of condition/result pairs and returns the first true value from the subsequent tuple of arguments. mark an "else" case as (1)
+// e.g. S_IF((cond_0, result_0)(cond_1, result_1)(cond_2, result_2)...(1, else_result)) returns result_1 if cond_0 is 0 and cond_1 is 1
 
-#define CLASS_MEMBER_(decl, type, name, size, value) (decl, type, name, size, value)
-#define CLASS_MEMBER_3(value, type, name) (CLASS_MEMBER_TYPE, CLASS_MEMBER_(type name;, type, name, sizeof(type), value))
-#define CLASS_MEMBER_4(value, type, name, array_size) (CLASS_MEMBER_TYPE, CLASS_MEMBER_(type name[array_size];, type, name, array_size * sizeof(type), value))
-#define CLASS_MEMBER(...) CAT(CLASS_MEMBER, VARIADIC_SIZE(__VA_ARGS__))(__VA_ARGS__)
+/* STRUCTURE ALGORITHMS */
+#define IS_OOP_END_OOP_END
+#define IS_OOP_END(val) IS_PAREN(CAT(IS_OOP_END_, val)())
 
+/* sequence operations */
+#define S_1ST_0(...) CATC((__VA_ARGS__), )
+#define S_1ST_(seq) T_INSPECT_0(S_1ST_0 seq)
+#define S_1ST(seq) OOP_IF(S_IS_EMPTY(seq))(ERASE_ARGS, S_1ST_)(seq)
+#define S_IS_EMPTY(seq) T_INSPECT_1(INSERT_COMMA_0 seq, 1)
+// erase the rest of a seq. If already post-pended with (OOP_END) start call at S_ERASE_
+// the next two lines are original, they might resolve better
+//#define S_ERASE_0(...) T_INSPECT_1(OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(PASS_ARGS, ERASE_ARGS)(, ERASE_ARGS), S_ERASE_NEXT)(1)
+//#define S_ERASE_1(...) T_INSPECT_1(OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(PASS_ARGS, ERASE_ARGS)(, ERASE_ARGS), S_ERASE_NEXT)(0)
+#define S_ERASE_0(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, S_ERASE_NEXT)(1)
+#define S_ERASE_1(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, S_ERASE_NEXT)(0)
+#define S_ERASE_NEXT(next) S_ERASE_##next
+#define S_ERASE_(seq) S_ERASE_0 seq
+#define S_ERASE(seq) OOP_IF(S_IS_EMPTY(seq))(ERASE_ARGS, S_ERASE_)(seq(OOP_END))
 
-#define FUNCTION_POINTER(ret, name, ...) ret LPAREN() * name RPAREN() LPAREN() __VA_ARGS__ RPAREN()
+// this should be pretty powerful...compound if statements. From a sequence cond_seq of pairs (cond, val), selects the first val where cond is true
+// the guide version is going to be even better
+// the next two lines are original, they might resolve better
+//#define S_IF_0(cond, result) T_INSPECT_1(OOP_IF(IS_OOP_END(cond))(PASS_ARGS, ERASE_ARGS)(,), OOP_IF(cond)(result S_ERASE_0, S_IF_1))
+//#define S_IF_1(cond, result) T_INSPECT_1(OOP_IF(IS_OOP_END(cond))(PASS_ARGS, ERASE_ARGS)(,), OOP_IF(cond)(result S_ERASE_0, S_IF_0))
+#define S_IF_0(cond, result) OOP_IF(IS_OOP_END(cond))( , OOP_IF(cond)(result S_ERASE_0, S_IF_1))
+#define S_IF_1(cond, result) OOP_IF(IS_OOP_END(cond))( , OOP_IF(cond)(result S_ERASE_0, S_IF_0))
+#define S_IF_(cond_seq) S_IF_0 cond_seq
+#define S_IF(cond_seq) OOP_IF(S_IS_EMPTY(cond_seq))(ERASE_ARGS, S_IF_)(cond_seq(OOP_END, OOP_END))
 
+#define S_ANY_0(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(0 , OOP_IF(T_INSPECT_0(__VA_ARGS__))(1 S_ERASE_0, S_ANY_1))
+#define S_ANY_1(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(0 , OOP_IF(T_INSPECT_0(__VA_ARGS__))(1 S_ERASE_0, S_ANY_0))
+#define S_ANY_(seq) S_ANY_0 seq
+#define S_ANY(cond_seq) OOP_IF(S_IS_EMPTY(cond_seq))(0 ERASE_ARGS, S_ANY_)(cond_seq(OOP_END))
 
-#define FUNCTION_(decl, type, name, ftypedef) (decl, type, name, ftypedef)
-#define FUNCTION(ret, name, ...) (FUNCTION_TYPE, FUNCTION_(FUNCTION_POINTER(ret, name, __VA_ARGS__);, CATD(CATD(ftype, name,_),__LINE__,_), name, typedef FUNCTION_POINTER(ret, CATD(CATD(ftype, name,_),__LINE__,_), __VA_ARGS__);))
+#define ANY(...) S_ANY(T_TO_S(__VA_ARGS__))
 
-#define CLASS_FUNCTION_(decl, type, name, ftypedef, value) (decl, type, name, ftypedef, value)
-#define CLASS_FUNCTION(value, ret, name, ...) (CLASS_FUNCTION_TYPE, CLASS_FUNCTION_(FUNCTION_POINTER(ret, name, __VA_ARGS__);, CATD(CATD(ftype, name,_),__LINE__,_), name, typedef FUNCTION_POINTER(ret, CATD(CATD(ftype, name,_),__LINE__,_), __VA_ARGS__);, value))
+// transform sequence to guide data structure
+// the next two lines are original, they might resolve better
+//#define S_TO_G_0(...) T_INSPECT_1(OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(PASS_ARGS, ERASE_ARGS)(, ), __VA_ARGS__ OBSTRUCT(RPAREN)() S_TO_G_1)
+//#define S_TO_G_1(...) T_INSPECT_1(OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(PASS_ARGS, ERASE_ARGS)(, ), __VA_ARGS__ OBSTRUCT(RPAREN)() S_TO_G_0)
+#define S_TO_G_0(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, S_TO_G_NEXT)((__VA_ARGS__), 1)
+#define S_TO_G_1(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, S_TO_G_NEXT)((__VA_ARGS__), 0)
+#define S_TO_G_NEXT(vals, next) PASS_ARGS_ vals) S_TO_G_##next
+#define S_TO_G_(seq) S_TO_G_0 seq
+#define S_TO_G(seq) OOP_IF(S_IS_EMPTY(seq))(ERASE_ARGS, S_TO_G_)(seq(OOP_END))
 
-#define CLASS_MANGLE(type) CAT(type, _CLASS)
-#define PARENT_MANGLE(type) TYPE_NAME(type)
-#define PARENT_(type, name) (type name;, type, name, sizeof(type))
-#define PARENT(type) (PARENT_TYPE, PARENT_(type, PARENT_MANGLE(type)))
+#define IS_IN_S(x, seq) IS_IN_G(x, S_TO_G(seq))
 
-#define G_FROM_SEL(sel, type, arg)
+// S_JOIN only combines the elements in the sequence, but it cannot put in delimiters. for that, use G_JOIN
+#define S_JOIN_0(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, S_JOIN_NEXT)((__VA_ARGS__), 1)
+#define S_JOIN_1(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, S_JOIN_NEXT)((__VA_ARGS__), 0)
+#define S_JOIN_NEXT(vals, next) PASS_ARGS_ vals S_JOIN_##next
+#define S_JOIN(seq) S_JOIN_(seq(OOP_END))
 
-#define G_SEL_END , G_SEL_END_END, G_SEL_END_END
-#define G_SEL_A(name, C, D) CHECK1(G_SEL_##C, G_SEL_NEXT)(name, C, D, B)
-#define G_SEL_B(name, C, D) CHECK1(G_SEL_##C, G_SEL_NEXT)(name, C, D, A)
-#define G_SEL_NEXT(name, C, D, next) name##C D G_SEL_##next(name, 
-#define G_SEL_END_END(name, C, D, next) 
-#define G_SEL(name, guide) G_SEL_A(name, guide END, END )
+// erase of the remainder of a guide. Note that if guide iteration has already started, need to call PASS_ARGS(G_ERASE_ LPAREN() guide)
+#define G_ERASE_0(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))( , G_ERASE_1 LPAREN())
+#define G_ERASE_1(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))( , G_ERASE_0 LPAREN())
+#define G_ERASE_ G_ERASE_0
+#define G_ERASE(guide) G_ERASE_0(guide OOP_END)
 
-#define G_CAT1_END , G_CAT1_END_END
-#define G_CAT1_A(delim, C) CHECK1(G_CAT1_##C, G_CAT1_NEXT)(delim, C, B)
-#define G_CAT1_B(delim, C) CHECK1(G_CAT1_##C, G_CAT1_NEXT)(delim, C, A)
-#define G_CAT1_NEXT(delim, C, next) delim C G_CAT1_##next(delim, 
-#define G_CAT1_END_END(delim, C, next) 
-#define G_CAT1(delim, guide) G_CAT1_A(delim, guide END)
+// old probably delete
+//#define G_1ST_0(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))( , G_1ST_1 LPAREN())
+//#define G_1ST_1(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))( , G_1ST_0 LPAREN())
+// return only the first element of the guide.
+#define G_1ST_(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))( , __VA_ARGS__ G_ERASE_ LPAREN())
+#define G_1ST(guide) G_1ST_(guide OOP_END)
 
-#define G_TO_SEQ_END , G_TO_SEQ_END_END
-#define G_TO_SEQ_A(C) CHECK1(G_TO_SEQ_##C, G_TO_SEQ_NEXT)(C, B)
-#define G_TO_SEQ_B(C) CHECK1(G_TO_SEQ_##C, G_TO_SEQ_NEXT)(C, A)
-#define G_TO_SEQ_NEXT(C, next) (C) G_TO_SEQ_##next(
-#define G_TO_SEQ_END_END(C, next) 
-#define G_TO_SEQ(guide) G_TO_SEQ_A(guide END)
+#define G_IF_0(cond, result) OOP_IF(IS_OOP_END(cond))( , OOP_IF(cond)(result G_ERASE_0 LPAREN(), G_IF_1 LPAREN()))
+#define G_IF_1(cond, result) OOP_IF(IS_OOP_END(cond))( , OOP_IF(cond)(result G_ERASE_0 LPAREN(), G_IF_0 LPAREN()))
+#define G_IF_ S_IF_0
+#define G_IF(cond_guide) G_IF_(guide OOP_END, OOP_END)
 
-/* prepend a name to the guide arguments list so that I can associate classes with members */
-// TODO: need to rename prepend macro since it does more than that
-#define G_POSTPEND_PREPEND_MACRO_END , G_POSTPEND_PREPEND_MACRO_END_END
-#define G_POSTPEND_PREPEND_MACRO_A(name, C) CHECK1(G_POSTPEND_PREPEND_MACRO_##C, G_POSTPEND_PREPEND_MACRO_NEXT)(name, C, B)
-#define G_POSTPEND_PREPEND_MACRO_B(name, C) CHECK1(G_POSTPEND_PREPEND_MACRO_##C, G_POSTPEND_PREPEND_MACRO_NEXT)(name, C, A)
-#define G_POSTPEND_PREPEND_MACRO_NEXT(name, C, next) C) name##C G_POSTPEND_PREPEND_MACRO_##next(name, 
-#define G_POSTPEND_PREPEND_MACRO_END_END(name, A, next)
-#define G_POSTPEND_PREPEND_MACRO(name, guide) G_POSTPEND_PREPEND_MACRO_A(name, guide END )
+// this can probably be replaced by G_JOIN where the func returns a guide element
+#define G_TO_G_0(func, ...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, G_TO_G_NEXT)(func, (__VA_ARGS__), 1)
+#define G_TO_G_1(func, ...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, G_TO_G_NEXT)(func, (__VA_ARGS__), 0)
+#define G_TO_G_NEXT(func, vals, next) func vals ) G_TO_G_##next(func, 
+#define G_TO_G_ G_TO_G_0
+#define G_TO_G(func, guide) G_TO_G_(func, guide OOP_END)
 
-#define SEL_ALL_DECL_PARENT_TYPE(...) TUPLE_AT_0(__VA_ARGS__))
-#define SEL_ALL_DECL_CLASS_FUNCTION_TYPE(...) TUPLE_AT_0(__VA_ARGS__))
-#define SEL_ALL_DECL_CLASS_MEMBER_TYPE(...) TUPLE_AT_0(__VA_ARGS__))
-#define SEL_ALL_DECL_FUNCTION_TYPE(...) TUPLE_AT_0(__VA_ARGS__))
-#define SEL_ALL_DECL_MEMBER_TYPE(...) TUPLE_AT_0(__VA_ARGS__))
+// same as G_TO_G but func takes arguments
+#define G_TO_G_A_0(func, args, ...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, G_TO_G_A_NEXT)(func, args, (__VA_ARGS__), 1)
+#define G_TO_G_A_1(func, args, ...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, G_TO_G_A_NEXT)(func, args, (__VA_ARGS__), 0)
+#define G_TO_G_A_NEXT(func, args, vals, next) PASS_ARGS(func EMPTY()(args, PASS_ARGS_ vals)) ) G_TO_G_A_##next(func, args, 
+#define G_TO_G_A_ G_TO_G_A_0
+#define G_TO_G_A(func, args, guide) G_TO_G_A_(func, args, guide OOP_END)
 
-#define SEL_CLASS_DECL_PARENT_TYPE(...)
-#define SEL_CLASS_DECL_CLASS_FUNCTION_TYPE(...) TUPLE_AT_0(__VA_ARGS__))
-#define SEL_CLASS_DECL_CLASS_MEMBER_TYPE(...) TUPLE_AT_0(__VA_ARGS__))
-#define SEL_CLASS_DECL_FUNCTION_TYPE(...)
-#define SEL_CLASS_DECL_MEMBER_TYPE(...)
+// useful functions for G_TO_G
+#define PREPEND_NEWLINE(stmt) OOP_NEWLINE stmt
+#define PREPEND_NEWLINE_1TAB(stmt) OOP_NEWLINE OOP_TAB stmt
+#define PREPEND_MACRO(macro, ...) macro##__VA_ARGS__
 
-#define SEL_CLASS_VALUE_PARENT_TYPE(...)
-#define SEL_CLASS_VALUE_CLASS_FUNCTION_TYPE(...) TUPLE_AT_4(__VA_ARGS__))
-#define SEL_CLASS_VALUE_CLASS_MEMBER_TYPE(...) TUPLE_AT_4(__VA_ARGS__))
-#define SEL_CLASS_VALUE_FUNCTION_TYPE(...)
-#define SEL_CLASS_VALUE_MEMBER_TYPE(...)
+#define G_FILTER_0(cond_func, ...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, G_FILTER_NEXT)(cond_func, (__VA_ARGS__), 1)
+#define G_FILTER_1(cond_func, ...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, G_FILTER_NEXT)(cond_func, (__VA_ARGS__), 0)
+#define G_FILTER_NEXT(cond_func, vals, next)  OOP_IF(cond_func vals)(PASS_ARGS_ vals RPAREN(), ) G_FILTER_##next(cond_func, 
+#define G_FILTER_ G_FILTER_0
+#define G_FILTER(cond_func, guide) G_FILTER_(cond_func, guide OOP_END)
 
-#define SEL_INST_DECL_PARENT_TYPE(...) TUPLE_AT_0(__VA_ARGS__))
-#define SEL_INST_DECL_CLASS_FUNCTION_TYPE(...)
-#define SEL_INST_DECL_CLASS_MEMBER_TYPE(...)
-#define SEL_INST_DECL_FUNCTION_TYPE(...) TUPLE_AT_0(__VA_ARGS__))
-#define SEL_INST_DECL_MEMBER_TYPE(...) TUPLE_AT_0(__VA_ARGS__))
+// this can probably be replaced by a call to G_JOIN where the func returns a sequence element
+#define G_TO_S_0(func, ...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, G_TO_S_NEXT)(func, (__VA_ARGS__), 1)
+#define G_TO_S_1(func, ...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, G_TO_S_NEXT)(func, (__VA_ARGS__), 0)
+#define G_TO_S_NEXT(func, vals, next) (func vals) G_TO_S_##next(func, 
+#define G_TO_S_ G_TO_S_0
+#define G_TO_S(func, guide) G_TO_S_(func, guide OOP_END)
 
-#define SEL_PARENT_DECL_PARENT_TYPE(...) TUPLE_AT_0(__VA_ARGS__))
-#define SEL_PARENT_DECL_CLASS_FUNCTION_TYPE(...) 
-#define SEL_PARENT_DECL_CLASS_MEMBER_TYPE(...) 
-#define SEL_PARENT_DECL_FUNCTION_TYPE(...) 
-#define SEL_PARENT_DECL_MEMBER_TYPE(...) 
+#define IS_IN_G_0(x, ...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(0 ERASE_ARGS, IS_IN_G_NEXT)(EQUAL(x, T_INSPECT_0(__VA_ARGS__)), x, 1)
+#define IS_IN_G_1(x, ...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(0 ERASE_ARGS, IS_IN_G_NEXT)(EQUAL(x, T_INSPECT_0(__VA_ARGS__)), x, 0)
+#define IS_IN_G_FOUND(x, next) G_ERASE_0(
+#define IS_IN_G_NEXT_(x, next) IS_IN_G_##next(x, 
+#define IS_IN_G_NEXT(tf, x, next) OOP_IF(tf)(1 IS_IN_G_FOUND, IS_IN_G_NEXT_) (x, next)
+#define IS_IN_G_ IS_IN_G_0
+#define IS_IN_G(x, guide) IS_IN_G_(x, guide OOP_END)
 
-#define SEL_PARENT_NAME_PARENT_TYPE(...) TUPLE_AT_2(__VA_ARGS__))
-#define SEL_PARENT_NAME_CLASS_FUNCTION_TYPE(...) 
-#define SEL_PARENT_NAME_CLASS_MEMBER_TYPE(...) 
-#define SEL_PARENT_NAME_FUNCTION_TYPE(...) 
-#define SEL_PARENT_NAME_MEMBER_TYPE(...) 
+// can probably generalize this to all transformations by adding an "args" argument so that the function is called func(OOP_IF(IS_PAREN(args)))(PASS_ARGS args, PASS_ARGS(args)), __VA_ARGS__)
+#define G_JOIN_0(func, ...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, G_JOIN_NEXT)(func, (__VA_ARGS__), 1)
+#define G_JOIN_1(func, ...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, G_JOIN_NEXT)(func, (__VA_ARGS__), 0)
+#define G_JOIN_NEXT(func, vals, next) func vals G_JOIN_##next(func, 
+#define G_JOIN_ G_JOIN_0
+#define G_JOIN(func, guide) G_JOIN_(func, guide OOP_END)
 
-#define SEL_PARENT_TYPE_PARENT_TYPE(...) TUPLE_AT_1(__VA_ARGS__))
-#define SEL_PARENT_TYPE_CLASS_FUNCTION_TYPE(...) 
-#define SEL_PARENT_TYPE_CLASS_MEMBER_TYPE(...) 
-#define SEL_PARENT_TYPE_FUNCTION_TYPE(...) 
-#define SEL_PARENT_TYPE_MEMBER_TYPE(...) 
+// helper for reverse namespace sequence
+#define OOP_GET_ACCESS(seq_out, class, name) OOP_IF(EQUAL(name, class__))(class__->seq_out, name.seq_out)
 
-#define SEL_FUNCTION_TYPEDEF_PARENT_TYPE(...)
-#define SEL_FUNCTION_TYPEDEF_CLASS_FUNCTION_TYPE(...) TUPLE_AT_1(__VA_ARGS__))
-#define SEL_FUNCTION_TYPEDEF_CLASS_MEMBER_TYPE(...) 
-#define SEL_FUNCTION_TYPEDEF_FUNCTION_TYPE(...) TUPLE_AT_1(__VA_ARGS__))
-#define SEL_FUNCTION_TYPEDEF_MEMBER_TYPE(...) 
+// reverse a sequence, but does much more
+#define S_REV_0(seq_out, ...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(seq_out ERASE_ARGS, S_REV_NEXT)(seq_out, 1, __VA_ARGS__)
+#define S_REV_1(seq_out, ...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(seq_out ERASE_ARGS, S_REV_NEXT)(seq_out, 0, __VA_ARGS__)
+#define S_REV_NEXT(seq_out, next, ...) S_REV_##next(OOP_GET_ACCESS(seq_out, __VA_ARGS__), 
+#define S_REV_ S_REV_0
+#define S_REV__(guide) S_REV_( , guide OOP_END)
+#define S_REV(seq) S_REV__(S_TO_G(seq))
 
-#define SEL_ALL_MEMBERS_PARENT_TYPE(...) TUPLE_AT_2(__VA_ARGS__))
-#define SEL_ALL_MEMBERS_CLASS_FUNCTION_TYPE(...) TUPLE_AT_2(__VA_ARGS__))
-#define SEL_ALL_MEMBERS_CLASS_MEMBER_TYPE(...) TUPLE_AT_2(__VA_ARGS__))
-#define SEL_ALL_MEMBERS_FUNCTION_TYPE(...) TUPLE_AT_2(__VA_ARGS__))
-#define SEL_ALL_MEMBERS_MEMBER_TYPE(...) TUPLE_AT_2(__VA_ARGS__))
+// reversing a guide is just convert to sequence --> reverse --> convert back to guide
 
-#define SEL_INST_MEMBERS_PARENT_TYPE(...) TUPLE_AT_2(__VA_ARGS__))
-#define SEL_INST_MEMBERS_CLASS_FUNCTION_TYPE(...) 
-#define SEL_INST_MEMBERS_CLASS_MEMBER_TYPE(...) 
-#define SEL_INST_MEMBERS_FUNCTION_TYPE(...) TUPLE_AT_2(__VA_ARGS__))
-#define SEL_INST_MEMBERS_MEMBER_TYPE(...) TUPLE_AT_2(__VA_ARGS__))
+// macros that should only be available for the conversion of class definitions to header files
+#ifdef OOPC
 
-#define SEL_CLASS_MEMBERS_PARENT_TYPE(...)
-#define SEL_CLASS_MEMBERS_CLASS_FUNCTION_TYPE(...) TUPLE_AT_2(__VA_ARGS__))
-#define SEL_CLASS_MEMBERS_CLASS_MEMBER_TYPE(...) TUPLE_AT_2(__VA_ARGS__))
-#define SEL_CLASS_MEMBERS_FUNCTION_TYPE(...)
-#define SEL_CLASS_MEMBERS_MEMBER_TYPE(...)
-
-//HASH_LIT define OOP_CLASS_G_##name name \
-//OOP_NEWLINE \
-
-#define INCLUDE_OOP HASH_LIT include <public_macros.h> OOP_NEWLINE  INCLUDE_STDLIB OOP_NEWLINE INCLUDE_STDIO
-
-// recursive inspection of 1 element guide
-#define G_MAKE_MEMBER_DEFS_END , G_MAKE_MEMBER_DEFS_END_END
-#define G_MAKE_MEMBER_DEFS_A(C) CHECK1(G_MAKE_MEMBER_DEFS_##C, G_MAKE_MEMBER_DEFS_NEXT)(C, B)
-#define G_MAKE_MEMBER_DEFS_B(C) CHECK1(G_MAKE_MEMBER_DEFS_##C, G_MAKE_MEMBER_DEFS_NEXT)(C, A)
-#define G_MAKE_MEMBER_DEFS_NEXT(C, next) HASH_LIT ifndef OOP_MEMBER_##C  OOP_NEWLINE HASH_LIT define OOP_MEMBER_##C( x RPAREN() x OOP_NEWLINE HASH_LIT endif OOP_NEWLINE G_MAKE_MEMBER_DEFS_##next(
-#define G_MAKE_MEMBER_DEFS_END_END(A, next)
-#define G_MAKE_MEMBER_DEFS(members) G_MAKE_MEMBER_DEFS_A(members END)
-
-/* make initialization statement */
-#define G_CHAIN_INIT_STMTS_END , G_CHAIN_INIT_STMTS_END_END
-#define G_CHAIN_INIT_STMTS_A(inst, C) CHECK1(G_CHAIN_INIT_STMTS_##C, G_CHAIN_INIT_STMTS_NEXT)(inst, C, B)
-#define G_CHAIN_INIT_STMTS_B(inst, C) CHECK1(G_CHAIN_INIT_STMTS_##C, G_CHAIN_INIT_STMTS_NEXT)(inst, C, A)
-#define G_CHAIN_INIT_STMTS_NEXT(inst, C, next) OOP_TAB OOP_CLASS_INST(C).init(&(inst-> TYPE_NAME(C))); OOP_NEWLINE G_CHAIN_INIT_STMTS_##next(inst, 
-#define G_CHAIN_INIT_STMTS_END_END(inst, A, next)
-#define G_CHAIN_INIT_STMTS(inst, guide) G_CHAIN_INIT_STMTS_A(inst, guide END )
-
-#define OOP_INIT_REQS(name, inst, seq) OOP_TAB inst->class__ = &OOP_CLASS_INST(name); OOP_NEWLINE G_CHAIN_INIT_STMTS(inst, G_SEL(SEL_PARENT_TYPE_, SEQ_TO_GUIDE(seq)));
-#define OOP_CLASS_INST(name) EXPAND(TYPE_NAME EMPTY()(CLASS_MANGLE(name)))
-
-#define CLASS_(name, seq)                  \
-HASH_LIT ifndef OOP_MEMBER_##name OOP_NEWLINE HASH_LIT define OOP_MEMBER_##name( x RPAREN() x OOP_NEWLINE HASH_LIT endif \
-OOP_NEWLINE \
-G_MAKE_MEMBER_DEFS(G_SEL(SEL_ALL_MEMBERS_, SEQ_TO_GUIDE(seq)))\
-HASH_LIT define OOP_CLASS_G_PARENT_##name G_POSTPEND_PREPEND_MACRO(OOP_CLASS_G_PARENT_, G_SEL(SEL_PARENT_TYPE_, SEQ_TO_GUIDE(seq))) \
-OOP_NEWLINE \
-HASH_LIT define OOP_MEMBERS_T_##name G_TO_SEQ(G_SEL(SEL_INST_MEMBERS_, SEQ_TO_GUIDE(seq))), G_TO_SEQ(G_SEL(SEL_CLASS_MEMBERS_, SEQ_TO_GUIDE(seq))) \
-OOP_NEWLINE \
-typedef struct name name;                                               \
-OOP_NEWLINE \
-typedef struct CLASS_MANGLE(name) CLASS_MANGLE(name); \
-OOP_NEWLINE \
-struct CLASS_MANGLE(name) {\
-OOP_NEWLINE \
-    G_CAT1(OOP_NEWLINE OOP_TAB, G_SEL(SEL_CLASS_DECL_, SEQ_TO_GUIDE(seq))) \
-OOP_NEWLINE \
-}; \
-OOP_NEWLINE \
-\
-\
-struct name {                                                           \
-OOP_NEWLINE \
-    G_CAT1(OOP_NEWLINE OOP_TAB, G_SEL(SEL_INST_DECL_, SEQ_TO_GUIDE(seq))) \
-OOP_NEWLINE \
-}; \
-OOP_NEWLINE \
-\
-\
-static name * CAT(name,__NEW__)(); \
-OOP_NEWLINE \
-static void CAT(name,__INIT__)(name * inst); \
-OOP_NEWLINE \
-static void CAT(name,__DEL__)(name * inst); \
-\
-\
-static CLASS_MANGLE(name) OOP_CLASS_INST(name) = {CAT(name,__NEW__), CAT(name,__INIT__), CAT(name,__DEL__)}; \
-OOP_NEWLINE \
-OOP_NEWLINE \
-static name name##_INIT = {&OOP_CLASS_INST(name), 0};\
-OOP_NEWLINE \
-\
-\
-static name * CAT(name,__NEW__)() { \
-OOP_NEWLINE \
-OOP_TAB name * inst = OOP_NO_MALLOC(name); \
-OOP_NEWLINE \
-OOP_TAB if (!inst) {return NULL;}; \
-OOP_NEWLINE \
-OOP_TAB OOP_CLASS_INST(name).init(inst); \
-OOP_NEWLINE \
-OOP_TAB return inst; \
-OOP_NEWLINE \
-} \
-OOP_NEWLINE \
-\
-\
-static void CAT(name,__INIT__)(name * inst) { \
-OOP_NEWLINE \
-OOP_TAB *inst = (name) {0}; \
-OOP_NEWLINE \
-OOP_INIT_REQS(name, inst, seq) \
-OOP_NEWLINE \
-} \
-OOP_NEWLINE \
-\
-\
-static void CAT(name,__DEL__)(name * inst) { \
-OOP_NEWLINE \
-OOP_TAB OOP_NO_FREE(inst); \
-OOP_NEWLINE \
-} \
-OOP_NEWLINE \
-
-// prepend a member pointer to the class definition
-#define CLASS(name, seq) \
-CLASS_(\
-    name, \
-    CLASS_FUNCTION(NULL, name *, new, ) \
-    CLASS_FUNCTION(NULL, void, init, ) \
-    CLASS_FUNCTION(NULL, void, del, name *) \
-    MEMBER(CLASS_MANGLE(name) *, class__) \
-    seq)
+#endif // OOPC
