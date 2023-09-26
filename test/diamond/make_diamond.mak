@@ -9,12 +9,12 @@ DEFS = defs.h
 TARGET_HEADER = classes.h
 TARGET_HEADER_FULL = $(current_dir)/$(TARGET_HEADER)
 
-PRE_CFLAGS = -E -CC -P -DOOPC
+PRE_CFLAGS = -E -P
 PRE_IFLAGS = -I../../include/
 
 CLEAN_SCRIPT = 
 
-CFLAGS = -Wall -pedantic -Wno-missing-braces
+CFLAGS = -Wall -pedantic -Wno-missing-braces -Wno-unused-variable -std=c99
 IFLAGS = -I../../include/
 LFLAGS = 
 

@@ -237,10 +237,3 @@ OOP_IF(OOP_AND(IS_COMPARABLE(x), IS_COMPARABLE(y)) )\
 #define S_REV_ S_REV_0
 #define S_REV__(guide) S_REV_( , guide OOP_END)
 #define S_REV(seq) S_REV__(S_TO_G(seq))
-
-// reversing a guide is just convert to sequence --> reverse --> convert back to guide
-
-// macros that should only be available for the conversion of class definitions to header files
-#ifdef OOPC
-
-#endif // OOPC

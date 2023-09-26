@@ -1,95 +1,143 @@
 # OOPC
 
-This is largely a set of macros and meta data structures written in the C preprocessor to generate boiler plate code to facilitate the creation of a "class" system to fake object-oriented programming. Different from other implementations I have seen is that I entirely use C preprocessor and a very small OS-dependent script generate valid C header files. No additional tools. Additionally, OOPC has multiple inheritance and does so without any upcasting/downcasting or having to do tricky pointer offsets.
+OOPC (read: "oopsie") is a set of macro header files and meta data structures written in the C preprocessor to generate boiler plate code to facilitate the creation of a "type" system for object-oriented programming in the C language. Different from other implementations I have seen is that the only non-C standard component used is a simple script to add newlines. The outputs are standard C header files/code. No additional tools. Additionally, OOPC has multiple inheritance and distinct interfacing and does so without any upcasting/downcasting or having to do tricky pointer offsets.
 
-## how to use it
+<details><summary> Documentation </summary><blockquote>
 
-- build a class definition header file using the `oop.h` macros that has `INCLUDE_OOP` at the top
+<b>Public Macro Overview</b>
+
+Reading the table, some general behavior/definitions:
+- macro arguments in `[]` are options 
+- as a general rule in this framework, types include all pointer de-referencing, e.g. the `type` of a double pointer is `double *`
+- `array size`s are number of elements, not bytes
+- `name`s must be valid identifiers
+- `value`s should be in parentheses to avoid any commas being interpreted as arguments
+- members are the name parts of a `struct`. MEMBER in the macro names generally refer to objects with a slight distinction for function objects in FUNCTION.
+- opaque data types can be made in this framework, but then `OOP_GET`, `OOP_INTERFACE`, and `OOP_SUPER` will only work in files that have visibility to the type definitions. To implement oqaque data types, wrapper functions must be made for these macros.
+
+| Macro | Description | Relationship to Class | Relationship to Instances | Implementation Status |
+|-------|-------------|-----------------------|---------------------------|-----------------------|
+| `CLASS(type, description)` | defines a `type` by its class and instances | defines the class | defines the instances | Done |
+| *`MEMBER(type, name[, value])` | declare an instance member | N/A | Each instance struct has a member of `type` with `name` and default `value` | default values not yet implemented |
+| *`ARRAY_MEMBER(type, name[, value], array size)` | declare an instance member array | N/A | Each instance struct has an array of `array size` members of `type` with `name` and default `value` | default values not yet implemented |
+| *,**`FUNCTION(value, return type, name, arg types...)` | declare an instance member function | N/A | Each instance struct has a member function with `name` that takes `arg types` inputs and `return type` | default values not yet implemented |
+| *`CLASS_MEMBER(type, name[, value])` | declare a class member | The class struct has a member of `type` with `name` and default `value` | N/A | default values not yet implemented |
+| *`ARRAY_CLASS_MEMBER(type, name[, value], array size)` | declare a class member array | The class struct has an array of `array size` members of `type` with `name` and default `value` | N/A  | default values not yet implemented |
+| *,**`CLASS_FUNCTION(value, return type, name, arg types...)` | declare a class member function | The class struct has a member function with `name` that takes `arg types` inputs and `return type` | N/A | default values not yet implemented |
+| *`EXTENDS(type)` | inherit from `type` | N/A | creates a "has a" sub-typing relationship in the hierarchy between the current type's instance and `type`*** | Done |
+| *`IMPLEMENTS(type[, interface function name, implementation name...pairs])` | implement interface `type` | creates a "has a" sub-typing relationship in the hierarchy between the current type's class and `type`*** | N/A | Done |
+| `OOP_SUPER(type, instance[, parent])` | resolve the `instance` as its `parent` based on the `type` definition | N/A | `type` was defined with `EXTENDS(parent)` | Done |
+| `OOP_INTERFACE(type, instance[, interface])` | resolve the `instance` by its implementation of `interface` based on the `type` definition | `type` as defined with `IMPLEMENTS(interface[, pairs of interface functions and their implementations])` | Done |
+| `OOP_GET(type, instance, attribute)` | resolve the `attribute` member of `instance` based on the `type` definition <br /> used for both "getting" and "setting" | N/A | class members are searched after instance members but the class hierarchy is searched before the instance hierarchy | Done |
+| `OOP_INIT(type, inst)` | initialize an instance | N/A | initializes the instance by linking it to its class definition <br /> This should only be used directly when initializing supertype instances, i.e. when writing initialization functions for children | Done, but will expand to `do {} while (0)` in the future |
+| `OOP_DECLARE(type, inst)` | declare an instance of `type` | N/A | declare and partially initialize an instance | Done, but will be unnecessary when OOP_INIT is "fixed" |
+| `TYPEDEF(type, alias)` | protected `typedef type alias` to prevent conflicts with C typedef restrictions | N/A | N/A | Done |
+
+*Only used within `description of `CLASS` macro
+
+**FUNCTIONs are treated as and can be declared as MEMBERs (as they are members of `struct`s!). FUNCTION is merely a convenience to also wrap boiler plate code for establishing types based on the function specification. To have a MEMBER that is a function object, the appropriate typedef needs to be manually set beforehand. Doing so probably results in more type-safe use of function members.
+
+***See "Is-a vs. Has-a, Extends vs Implements, Sub-class vs Interface" (in progress)
+
+</blockquote></details>
+
+### How to use OOPC
+
+- build a class definition header file using the `oopc.h` header macros in the table above that has `INCLUDE_OOPC` at the top
 - pre-process the definition header file and store it in another header file. This is the file you will actually include in your `.c` files or other dependent header files.
+    - examples use gcc with flags `-E -P`
 - before using the header file you just built, pass it through a script to replace "OOP_NEWLINE" with a new line and OOP_TAB to your preferred number of spaces or tabs. You also can just define the macro `#define OOP_TAB` to remove them if you do not care.
 - in your dependent files, simply include the header file just built
+    - compile with whatever C compiler you want. The resulting headers from base OOPC only requires a C99 compliant compiler
 
-Example class definition:
+#### Example class definition:
+
+Build a struct to represent a `char` buffer with max width 1024 including the `\0` terminator.
 ```
-// defs.h
-#include <oop.h>
+// defs.h converted to buffer.h
+#include <oopc.h>
 INCLUDE_OOP
-
-// builds a struct 'array' with a double array of size 10, 'arr' with 10 stored in member 'n' and current size in size
-CLASS(array, 
-    MEMBER(unsigned int, n)
-    MEMBER(unsigned int, size)
-    MEMBER(double, arr, 10)
+INCLUDE <stdio.h>
+INCLUDE <string.h>
+DEFINE MAX_BUFFER_LENGTH 1024
+TYPEDEF(struct buffer, buffer)
+void buffer_init(buffer * b, char * c_str);
+int buffer_print(buffer * b);
+int buffer_append(buffer * b, buffer * to_append);
+CLASS(buffer, 
+    MEMBER(int, size)
+    ARRAY_MEMBER(char, buf, MAX_BUFFER_LENGTH)
+    CLASS_FUNCTION(buffer_init, void, init, buffer *, char *)
+    CLASS_FUNCTION(buffer_print, int, print, buffer *)
+    CLASS_FUNCTION(buffer_append, int, append, buffer *, buffer *)
 )
 
-typedef struct stack stack;
-
-// returns 0 if successful, 1 if stack is full
-int push(stack * st, double val);
-int pop(double * val, stack * st);
-
-// builds a struct 'stack' that inherits from 'array' and additionally includes functions/methods push and pop. The first NULL values are used for initialization and can be modified at any time.
-CLASS(stack,
-    PARENT(array)
-    CLASS_FUNCTION(push, int, push, stack *, double)
-    CLASS_FUNCTION(pop, int, pop, double *, stack *)
-)
-
-// arrays_stacks.c
-#include "classes.h"
-// returns 0 if successful, 1 if stack is full
-int push(stack * st, double val) {
-    if (OOP_GET(stack, *st, size) < OOP_GET(stack, *st, n)) {
-        OOP_GET(stack, *st, arr)[OOP_GET(stack, *st, size)++] = val;
-        return 0;
+// buffer.c
+#include "buffer.h"
+void buffer_init(buffer * b, char * c_str) {
+    char * buf = OOP_GET(buffer, *b, buf);
+    if (c_str) {
+        OOP_GET(buffer, *b, size) = strlen(c_str);
+        while (*c_str != '\0') {
+            *buf = *c_str;
+            c_str++;
+            buf++;
+        }
+    } else {
+        OOP_GET(buffer, *b, size) = 0;
     }
-    return 1;
+    *buf = '\0';
+    
 }
 
-// return 0 if successful, 1 if stack is empty
-int pop(double * out, stack * st) {
-    if (OOP_GET(stack, *st, size)) {
-        *out = OOP_GET(stack, *st, arr)[--OOP_GET(stack, *st, size)];
-        return 0;
-    }
-    return 1;
+int buffer_print(buffer * b) {
+    return printf((const char *) OOP_GET(buffer, *b, buf));
 }
 
-// defs.h pre-processed to file 'classes.h'
+int buffer_append(buffer * b, buffer * to_append) {
+    if (MAX_BUFFER_LENGTH <= OOP_GET(buffer, *b, size) + OOP_GET(buffer, *to_append, size)) {
+        return 0; // no characters written to b
+    }
+    char * b1 = OOP_GET(buffer, *b, buf) + OOP_GET(buffer, *b, size); // point to end of buffer
+    char * b2 = OOP_GET(buffer, *to_append, buf);
+    while (*b2 != '\0') {
+        *b1 = *b2;
+        b2++;
+        b1++;
+    }
+    *b1 = '\0';
+    OOP_GET(buffer, *b, size) += OOP_GET(buffer, *to_append, size);
+    return OOP_GET(buffer, *to_append, size);
+}
 
 // main.c
-#include <stdio.h>
-#include "classes.h"
+#include "buffer.h"
 
-int main() {    
-    stack st;
-    __INIT__(stack)(&st);
-    OOP_GET(stack, st, n) = 10; // still necessary. Will overload init later
-    OOP_GET(stack, st, push) = push;
-    OOP_GET(stack, st, pop) = pop;
+#include "buffer.h"
 
-    for (unsigned int i = 0; i < 11; i++) {
-        printf("result of push at %u: %d\n", i, OOP_GET(stack, st, push)(&st, 1.0 * i));
+int main(int argc, char ** args) {
+    if (argc > 2) {
+        OOP_DECLARE(buffer, b1);
+        OOP_GET(buffer, b1, init)(&b1, args[1]);
+        OOP_DECLARE(buffer, b2);
+        OOP_GET(buffer, b2, init)(&b2, args[2]);
+
+        if (OOP_GET(buffer, b1, append)(&b1, &b2)) {
+            printf("successfully concatenated two buffers:\n");
+            OOP_GET(buffer, b1, print)(&b1);
+        } else {
+            printf("insufficient buffer space to concatenate two buffers:\n");
+            OOP_GET(buffer, b1, print)(&b1);
+            printf("\n");
+            OOP_GET(buffer, b2, print)(&b2);
+        }
+        printf("\n");
     }
-
     return 0;
 }
 
-/* prints
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-1
-```
 
-Note that the way CLASS_FUNCTIONS have to be created later and assigned will be changed.
+```
 
 Full documentation is forthcoming, but for now, you can follow the diamond example in `/test/` which has class definitions in `defs.h` and an application of the diamond problem in `diamond.c`. The code defines 4 classes in the standard configuration To build on Windows with `make`, simply call `make -f make_diamond.mak` from the `/test/` directory and run. 
 

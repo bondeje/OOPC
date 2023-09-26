@@ -1,7 +1,7 @@
 #include <oop.h>
 #include <pptuples.h>
 
-#define INCLUDE_OOP INCLUDE <oopc.h> OOP_NEWLINE INCLUDE_STDLIB OOP_NEWLINE INCLUDE_STDIO
+#define INCLUDE_OOPC INCLUDE <oopc.h> OOP_NEWLINE INCLUDE_STDLIB OOP_NEWLINE INCLUDE_STDIO
 
 /* name mangling */
 #define INST_MANGLE(name) CAT(name, __)
@@ -9,21 +9,11 @@
 #define CLASS_MANGLE(type) CAT(type, _CLASS)
 #define CLASS_INST(name) PASS_ARGS(TYPE_NAME EMPTY()(CLASS_MANGLE(name)))
 
+#define TYPEDEF(name, id) IFNDEF CAT(TYPEDEF_, id) OOP_NEWLINE OOP_TAB DEFINE CAT(TYPEDEF_, id) OOP_NEWLINE OOP_TAB typedef name id; OOP_NEWLINE ENDIF
+
 /* class data structure algorithms */
 //#define OOP_CLASS_G_HIERARCHY(name) name) CLASS_MANGLE(name)) CATD(OOP_CLASS_G_PARENT, CLASS_MANGLE(name), _) OOP_CLASS_G_PARENT_##name
 #define IS_PARENT(A, B) IS_IN_G(A, OOP_CLASS_G_HIER_##B)
-
-// special backtracking function
-/*
-#define G_BT_PASS_ACC(dummy, accessor) dummy, accessor
-#define G_BT_ADD(next_class, dummy, accessor, class, id, next) dummy, accessor) class, id)
-#define G_BT_0(next_class, dummy, accessor, class, id) OOP_IF(IS_OOP_END(dummy))(ERASE_ARGS, OOP_IF(IS_PARENT(Next_class, class))(G_BT_ADD, G_BT_NEXT))(next_class, dummy, accessor, class, id, 1)
-#define G_BT_1(next_class, dummy, accessor, class, id) OOP_IF(IS_OOP_END(dummy))(ERASE_ARGS, OOP_IF(IS_PARENT(Next_class, class))(G_BT_ADD, G_BT_NEXT))(next_class, dummy, accessor, class, id, 0)
-#define G_BT_NEXT(next_class, dummy, accessor, class, id, next) G_BT_##next(next_class, G_BT_PASS_ACC(
-#define G_BT_ G_BT_0
-#define G_BT(next_class, ns_g) G_BT_(next_class, G_BT_PASS_ACC LPAREN() ns_g OOP_END,,,)
-#define S_BT(namespace, next_class) G_BT(next_class, S_TO_G(namespace))
-*/
 
 #define OOP_MEMBER_MEMBER_TYPE(x) x
 #define IS_MEMBER_TYPE(type, ...) EQUAL(MEMBER_TYPE, type)
@@ -32,7 +22,7 @@
 #define MEMBER_3(type, name, value) (MEMBER_TYPE, MEMBER_(type name;, type, name, (OOP_IF(IS_PAREN(value()))(OOP_NO_DEFAULT, value)), sizeof(type)))
 #define MEMBER(...) CAT(MEMBER, VARIADIC_SIZE(__VA_ARGS__))(__VA_ARGS__)
 
-#define ARRAY_MEMBER_3(type, name, array_size) (MEMBER_TYPE, MEMBER_(type name;, type, name, OOP_NO_DEFAULT, array_size * sizeof(type)))
+#define ARRAY_MEMBER_3(type, name, array_size) (MEMBER_TYPE, MEMBER_(type name[array_size];, type, name, OOP_NO_DEFAULT, array_size * sizeof(type)))
 #define ARRAY_MEMBER_4(type, name, value, array_size) (MEMBER_TYPE, MEMBER_(type name[array_size];, type, name, (OOP_IF(IS_PAREN(value()))(OOP_NO_DEFAULT, value)), array_size * sizeof(type)))
 #define ARRAY_MEMBER(...) CAT(ARRAY_MEMBER, VARIADIC_SIZE(__VA_ARGS__))(__VA_ARGS__)
 
@@ -128,9 +118,9 @@ OOP_NEWLINE \
 DEFINE CAT(OOP_MEMBERS_G_, CLASS_MANGLE(name)) G_FILTER(IS_CLASS_MEMBER, S_TO_G(seq)) \
 OOP_NEWLINE \
 OOP_NEWLINE \
-typedef struct name name; \
+TYPEDEF(struct name, name) \
 OOP_NEWLINE \
-typedef struct CLASS_MANGLE(name) CLASS_MANGLE(name); \
+TYPEDEF(struct CLASS_MANGLE(name), CLASS_MANGLE(name)) \
 OOP_NEWLINE \
 struct CLASS_MANGLE(name) { \
 OOP_NEWLINE \
@@ -147,18 +137,30 @@ OOP_NEWLINE \
 OOP_NEWLINE \
 \
 \
+MAKE_CLASS_INIT(name, seq); \
+OOP_NEWLINE \
+
+/*
+Below are extensions to the CLASS macro to provide default implementations for "new", "init", and 
+"del" functions for each class. This is tabled while I think of a way that a user can "override" 
+them with a macro inside a CLASS invocation. It is not a straightforward problem. The errors were
+pretty hard to follow when trying a simple OOP_IF() macro to check if the member existed. Such a 
+check ultimately must convert the sequence to a check, filter the guide, then check if these 
+functions were provided by the user...IF_IN_G is not very stable to begin with, esp. within an 
+OOP_IF invocation). Keeping them here in case I come back to it.
+*/
+
+/* 
+\
+\
+OOP_NEWLINE \
+OOP_NEWLINE \
 static name * CAT(name,__NEW__)(); \
 OOP_NEWLINE \
 static void CAT(name,__INIT__)(name * inst); \
 OOP_NEWLINE \
 static void CAT(name,__DEL__)(name * inst); \
-\
-\
-OOP_NEWLINE \
-/*static CLASS_MANGLE(name) CLASS_INST(name) = {CAT(name,__NEW__), CAT(name,__INIT__), CAT(name,__DEL__)};*/ \
-OOP_NEWLINE \
-MAKE_CLASS_INIT(name, seq); \
-OOP_NEWLINE \
+
 \
 \
 static name * CAT(name,__NEW__)() { \
@@ -191,15 +193,14 @@ OOP_TAB OOP_FREE(inst); \
 OOP_NEWLINE \
 } \
 OOP_NEWLINE \
+*/
 
-// prepend a member pointer to the class definition
+// prepend a member pointer to the class and instance object definition
 #define CLASS(name, seq) \
 CLASS_(\
     name, \
-    CLASS_FUNCTION(name##__NEW__, name *, new, ) \
-    CLASS_FUNCTION(name##__INIT__, void, init, name *) \
-    CLASS_FUNCTION(name##__DEL__, void, del, name *) \
     MEMBER(CLASS_MANGLE(name) *, class__) \
+    CLASS_MEMBER(void *, class__, NULL) \
     seq)
 
 #define OOP_BT_GET_CUR_CLASS(...) T_INSPECT_0(__VA_ARGS__)
@@ -211,18 +212,15 @@ CLASS_(\
 #define OOP_G_BT_NS_TO_S_0(...) OOP_IF(IS_OOP_END(OOP_BT_GET_CUR_CLASS(__VA_ARGS__)))(ERASE_ARGS_, OOP_G_BT_NS_TO_S_NEXT)(1, __VA_ARGS__)
 #define OOP_G_BT_NS_TO_S_1(...) OOP_IF(IS_OOP_END(OOP_BT_GET_CUR_CLASS(__VA_ARGS__)))(ERASE_ARGS_, OOP_G_BT_NS_TO_S_NEXT)(0, __VA_ARGS__)
 #define OOP_G_BT_NS_TO_S_NEXT(next, ...) (__VA_ARGS__) OOP_G_BT_NS_TO_S_##next(
-//#define OOP_G_BT_NS_FOUND(next_class, next, ...) OOP_BT_GET_CUR_CLASS(__VA_ARGS__), OOP_BG_GET_NAME(__VA_ARGS__))
 #define OOP_G_BT_NS_FOUND(next_class, next, ...) (OOP_BT_GET_CUR_CLASS(__VA_ARGS__), OOP_BG_GET_NAME(__VA_ARGS__)) OOP_G_BT_NS_TO_S_0(
 #define OOP_G_BT_NS_0(next_class, ...) OOP_IF(IS_OOP_END(OOP_BT_GET_CUR_CLASS(__VA_ARGS__)))(ERASE_ARGS, OOP_ELSE_IF(IS_PARENT EMPTY() (next_class, OOP_BT_GET_CUR_CLASS(__VA_ARGS__)))(OOP_G_BT_NS_FOUND, OOP_G_BT_NS_NEXT))(next_class, 1, __VA_ARGS__)
 #define OOP_G_BT_NS_1(next_class, ...) OOP_IF(IS_OOP_END(OOP_BT_GET_CUR_CLASS(__VA_ARGS__)))(ERASE_ARGS, OOP_ELSE_IF(IS_PARENT EMPTY() (next_class, OOP_BT_GET_CUR_CLASS(__VA_ARGS__)))(OOP_G_BT_NS_FOUND, OOP_G_BT_NS_NEXT))(next_class, 0, __VA_ARGS__)
 #define OOP_G_BT_NS_NEXT(next_class, next, ...) OOP_G_BT_NS_##next(next_class, 
 #define OOP_G_BT_NS__ OOP_G_BT_NS_0
-//#define OOP_G_BT_NS_(namespace, next_class)  PASS_ARGS(G_TO_S_ EMPTY() LPAREN(),  FARGEVAL(OOP_G_BT_NS__,  (next_class, S_TO_G(namespace) OOP_END)))
-//#define OOP_G_BT_NS(namespace, next_class) FARGEVAL(PASS_ARGS_, OOP_G_BT_NS_(namespace, next_class))
 #define OOP_G_BT_NS_(next_class, guide) OOP_G_BT_NS__(next_class, guide OOP_END)
 #define OOP_G_BT_NS(namespace, next_class) OOP_G_BT_NS_(next_class, S_TO_G(namespace))
 
-#define G_SEARCH_EXIT(namespace, ...) namespace G_ERASE(
+#define G_SEARCH_EXIT(namespace, ...) namespace G_ERASE_(
 #define G_SEARCH_0(namespace, member, class) OOP_IF(IS_IN_G(member, GET_MEMBER_NAMES(class)))(G_SEARCH_EXIT, G_SEARCH_NEXT_0)(namespace, member, class)
 #define G_SEARCH_1(namespace, member, class) OOP_IF(IS_IN_G(member, GET_MEMBER_NAMES(class)))(G_SEARCH_EXIT, G_SEARCH_NEXT_1)(namespace, member, class)
 // rework this one so that it iterates over namespace until OOP(IS_PARENT) is true
@@ -241,16 +239,20 @@ CLASS_(\
 #define G_SEARCH(namespace, member, hier) G_SEARCH_(namespace, member, hier OOP_END)
 #define OOP_GET(class, inst, member) (inst) S_REV(G_SEARCH((class, ), member, OOP_CLASS_G_HIER_##class)) member
 
+
 //#define OOP_GET(class, inst, member) OOP_IF(IS_IN_G(member, GET_MEMBER_NAMES(class)))( (inst).member ERASE_ARGS, not yet implemented ERASE_ARGS)(class, member)
-#define OOP_SUPER_2(A, inst) inst. TYPE_NAME(G_1ST(OOP_CLASS_G_PARENT_##A))
-#define OOP_SUPER_3(A, inst, B) inst. TYPE_NAME(B)
+#define OOP_SUPER_2(A, inst) (inst). TYPE_NAME(G_1ST(OOP_CLASS_G_PARENT_##A))
+#define OOP_SUPER_3(A, inst, B) (inst). TYPE_NAME(B)
 #define OOP_SUPER(...) T_INSPECT_3(__VA_ARGS__, OOP_SUPER_3, OOP_SUPER_2)(__VA_ARGS__)
 
 // 2-form does not really make sense
-#define OOP_INTERFACE_2(A, inst) inst.class__->TYPE_NAME(G_1ST(CAT(OOP_CLASS_G_PARENT_, CLASS_MANGLE(A))))
+#define OOP_INTERFACE_2(A, inst) (inst).class__->TYPE_NAME(G_1ST(CAT(OOP_CLASS_G_PARENT_, CLASS_MANGLE(A))))
 #define OOP_INTERFACE_3(A, inst, B) OOP_GET(A, inst, TYPE_NAME(B))
 #define OOP_INTERFACE(...) T_INSPECT_3(__VA_ARGS__, OOP_INTERFACE_3, OOP_INTERFACE_2)(__VA_ARGS__)
 
 // modify __INIT__ so that it calls a generic init algorithm that assigns the first element class__
-#define __INIT__(name, ...) OOP_CLASS_INST(name).init
-
+//#define INIT(name, inst) (inst).class__ = &OOP_CLASS_INST(name)
+#define OOP_INIT(name, inst) inst = (name) {.class__ = &OOP_CLASS_INST(name)}
+#define OOP_DECLARE(name, inst) name OOP_INIT(name, inst)
+#define OOP_NEW(name, pinst) name * pinst = (name *) malloc(sizeof(name)); OOP_INIT(name, *pinst);
+#define OOPC(func) OOP_##func EMPTY()

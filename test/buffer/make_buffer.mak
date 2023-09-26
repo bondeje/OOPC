@@ -4,12 +4,12 @@ CC = gcc
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
-BASE_NAME = array_stacks
+BASE_NAME = buffer
 DEFS = defs.h
-TARGET_HEADER = classes.h
+TARGET_HEADER = buffer.h
 TARGET_HEADER_FULL = $(current_dir)/$(TARGET_HEADER)
 
-PRE_CFLAGS = -E -P
+PRE_CFLAGS = -E -P -DNDEBUG
 PRE_IFLAGS = -I../../include/
 
 CLEAN_SCRIPT = 
