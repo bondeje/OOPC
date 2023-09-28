@@ -17,7 +17,7 @@ INCLUDE <creatable.h>
  */
 typedef void (*call_t)(void *, ...);
 
-DEFINE CALL(type, inst, ...) SPLIT(OOP_INTERFACE)(type, inst, Callable).call(&inst, CATD(__VA, ARGS__, _))
+DEFINE CALL(type, pinst, ...) SPLIT(OOP_INTERFACE)(type, *pinst, Callable).call(pinst, CATD(__VA, ARGS__, _))
 
 DEFINE GET_CALLABLE(type, func) Callable_##type##_##func
 

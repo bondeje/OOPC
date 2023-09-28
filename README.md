@@ -1,6 +1,8 @@
 # OOPC
 
-OOPC (read: "oopsie") is a set of macro header files and meta data structures written in the C preprocessor to generate boiler plate code to facilitate the creation of a "type" system for object-oriented programming in the C language. Different from other implementations I have seen is that the only non-C standard component used is a simple script to add newlines. The outputs are standard C header files/code. No additional tools. Additionally, OOPC has multiple inheritance and distinct interfacing and does so without any upcasting/downcasting or having to do tricky pointer offsets.
+OOPC (read: "oopsie") is a set of macro header files and meta data structures written in the C preprocessor to generate boiler plate code to facilitate the creation of a "type" system for object-oriented programming in the C language. Different from other implementations I have seen is that the only non-C standard components used are macro iterations (widely implemented in C compilers) and a simple script to insert newlines. The outputs are standard C (C99+) header files/code. No external tooling. 
+
+OOPC has multiple inheritance and distinct interfacing and does so without any upcasting/downcasting or having to do tricky pointer offsets.
 
 ## Potential and Applied Concepts
 
@@ -38,10 +40,109 @@ CLASS(ObjToCall,
 )
 
 // to use
-DECLARE(ObjToCall, obj);
+DECLARE(ObjToCall, obj)
+/* init obj code however you wish */
 CALL(ObjToCall, obj, arguments...);  // "calls" the object
 
 ```
+
+</blockquote></details>
+
+<details><summary> Templating </summary><blockquote>
+
+Templates are a big part of C++ and it is natural to want flexibility and configurability while maintaining type safety. Since macros can parameterize other macros, OOPC can also do templating although it can be unwieldy and require use of a lot of internal macros.
+
+A simple example is if you wanted to create interfaces for general array types. These would be structs that look something like
+
+```
+struct array_int {
+    size_t capacity;    // number of elements allocated for arr
+    size_t size;        // number of elements current written to arr
+    int * arr;          // array of integers
+}
+```
+
+or 
+
+```
+struct array_double {
+    size_t capacity;    // number of elements allocated for arr
+    size_t size;        // number of elements current written to arr
+    double * arr;       // array of integers
+}
+```
+
+For type safety, we would want access to both, but we might also have functions that we might want to accept multiple array types, e.g. comparing two elements or getting their respective sizes. How to handle this? We can use interfaces to implement shared functionality or inheritance to give each typed array access to shared members or in probably in this case, both. Class extension or inheritance works well for the parts of these structs that are common, namely the members `capacity` and `size`. When we need to pass the objects into functions that accept either, however, the superclass doesn't know anything about the contents of the subclass and should not be responsible for maintaining any (type) safety or invariants. The key to the latter points then is to implement a shared interface. This interface can be passed along with a generic object to provide specificity and a context for an operation that is shared among the objects, but different. Templating can help use define these interfaces and subclasses.
+
+So how do we create class templates to accommodate all our potential arrays? Well, first look at how we would construct each of these structs individually in OOPC.
+
+```
+// compare elements of an int array of size n at indices i and j
+int array_int_compare(array_int * iarr, size_t i, size_t j);
+size_t array_int_size(array_int * iarr);
+CLASS(array_int,
+    MEMBER(size_t, capacity)
+    MEMBER(size_t, size)
+    MEMBER(int *, arr)
+    CLASS_FUNCTION(array_int_compare, int, compare, array_int *, size_t, size_t)
+    CLASS_FUNCTION(array_int_size, size_t, size, array_int *)
+)
+
+int array_double_compare(array_double * darr, size_t i, size_t j);
+size_t array_double_size(array_double * darr);
+CLASS(array_double,
+    MEMBER(size_t, capacity)
+    MEMBER(size_t, size)
+    MEMBER(double *, arr)
+    CLASS_FUNCTION(array_double_compare, int, compare, array_double *, size_t, size_t)
+    CLASS_FUNCTION(array_double_size, size_t, size, array_double *)
+)
+```
+
+When members are shared, that generally means the base class should contain those members. When class members are shared, that generally means the interface should contain those members. And since we are templating away the type of the elements in the array, the type of the `arr` members needs to be templated, but where to put it? There are actually a few ways to do this in OOPC, but we'll go with the one that has a little more type safety (generics in C will always have some amount of type "un"-safety unless we are allowed to have C11 or never with `_Generic` selection). There is also a very efficient way to define the interface and class at the same time, but we will be a little more explicit here (and use fewer internal macros).
+
+To indicate templating, we will use `##template_parameter` to indicate that template_parameter will be something our template has to handle. Our base class will look like
+
+```
+// declare base class
+CLASS(array,
+    MEMBER(size_t, capacity)
+    MEMBER(size_t, size)
+)
+// declare template using generic objects for heterogenous types
+CLASS(array_intf, 
+    FUNCTION(NULL, int, compare, void *, size_t, size_t)
+    FUNCTION(NULL, size_t, size, void *)
+)
+```
+
+and we have to have declarations/definitions for each of the interface functions
+
+Then our template will look like the following
+
+```
+#define TEMPLATE_ARRAY(type) \
+TYPEDEF(struct array_##type, array_##type) \
+int array_##type##_compare(void * arr, size_t i, size_t j); \
+size_t array_##type##_size(void * arr); \
+CLASS(array_##type, \
+    EXTENDS(array) \
+    MEMBER(type *, arr) \
+    IMPLEMENTS(array_intf, compare, array_##type##_compare, size, array_##type##_size) \
+)
+```
+
+Once we have .c files with the implementations of each interface function, we are almost completely done. The declarations for `array`, `array_intf`, and the `TEMPLATE_ARRAY(type)` macro would go into a `array.def.h` header file that would get converted to array.h for the base class. In either the same file or separate files for each type (for the later, they would also have to be `*.def.h` files that include `array.def.h`) all that one needs to do to declare a new array type is to call the `TEMPLATE_ARRAY()` macro:
+
+```
+TEMPLATE_ARRAY(int)
+TEMPLATE_ARRAY(double)
+TEMPLATE_ARRAY(long)
+```
+
+A few notes:
+- The way we templated the types with macro concatenation means the types themselves must be valid identifiers, which would restrict us to non-pointer types and built-in types that are single words. This can be worked-around with a simple typedef to unify multi-word types (ex. long long -> llong) and pointers (double * -> pdouble).
+- Since we are already putting `TEMPLATE_ARRAY()` in a .def.h file, which gets pre-processed 2x, we can actually have `TEMPLATE_ARRAY()` emit macros that include the templated implementations of the interface functions! This reduces the implementation of each array type to as little as a single (albet borderline unreadable) line...but that's some macro trickery that won't be expounded on here.
 
 </blockquote></details>
 

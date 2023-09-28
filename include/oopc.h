@@ -69,7 +69,7 @@
 #define IMPLEMENTS(type, ...) (INTERFACE_TYPE, IMPLEMENTS_(type name;, type, INTERFACE_MANGLE(type), (PAIRED_T_TO_INIT(__VA_ARGS__)), sizeof(type)))
 
 /* implement an interface in an interface. maybe do not need this */
-//#define IMPLEMENT(type, ...) INTERFACE_MANGLE(type), {.class__ = CLASS_MANGLE(type) PAIRED_T_TO_INIT(__VA_ARGS__)}
+#define IMPLEMENT(type, ...) INTERFACE_MANGLE(type), ({.class__ = CLASS_MANGLE(type) PAIRED_T_TO_INIT(__VA_ARGS__)})
 
 #define IS_INST_MEMBER(type, ...) ANY(EQUAL(PARENT_TYPE, type), EQUAL(MEMBER_TYPE, type), EQUAL(FUNCTION_TYPE, type))
 #define IS_CLASS_MEMBER(type, ...) ANY(EQUAL(INTERFACE_TYPE, type), EQUAL(CLASS_MEMBER_TYPE, type), EQUAL(CLASS_FUNCTION_TYPE, type))
