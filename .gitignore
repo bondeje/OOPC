@@ -54,5 +54,6 @@ dkms.conf
 # work in progress folders
 .vscode/
 workbench/
+interface/partial*
 *.h_orig
 *.c_orig

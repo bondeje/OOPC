@@ -2,6 +2,51 @@
 
 OOPC (read: "oopsie") is a set of macro header files and meta data structures written in the C preprocessor to generate boiler plate code to facilitate the creation of a "type" system for object-oriented programming in the C language. Different from other implementations I have seen is that the only non-C standard component used is a simple script to add newlines. The outputs are standard C header files/code. No additional tools. Additionally, OOPC has multiple inheritance and distinct interfacing and does so without any upcasting/downcasting or having to do tricky pointer offsets.
 
+## Potential and Applied Concepts
+
+<details><summary> Callable objects </summary><blockquote>
+
+The `callable.def.h` file creates a callable object struct and associated macros that allow a user to implement an interface for another struct to be "callable". "Callable" here means there is a one-to-one association of the object to a function. In Python, this simply looks like 
+```
+class ObjToCall:
+    def __call__(self, ...):
+        # implementation
+
+# to use
+A = ObjToCall()
+result = A() # "calls" the object
+```
+
+Since in pure C, we cannot make a struct executable, we cannot make the syntax work this simply, but we can get kind of close. The analogous behavior in OOPC is
+```
+// ObjToCall.def.h
+TYPEDEF(struct ObjToCall, ObjToCall)
+return_type my_func(ObjToCall *, other args...); // the function I want to call when "calling" the instance of ObjToCall. Implementation in some .c file
+
+// if my_func returns void and the "other args" is actually a variadic, done. Otherwise, have wrap the function with the MAKE_CALLABLE macro
+// define the class if my_func did not require MAKE_CALLABLE() macro
+CLASS(ObjToCall,
+    /* class declarations */
+    IMPLEMENTS(Callable, call, my_func)
+)
+
+// else if MAKE_CALLABLE() macro was required
+MAKE_CALLABLE(ObjToCall, return_type, my_func, other arg types...)
+CLASS(ObjToCall,
+    /* class declarations */
+    IMPLEMENTS(Callable, call, GET_CALLABLE(ObjToCall, my_func))
+)
+
+// to use
+DECLARE(ObjToCall, obj);
+CALL(ObjToCall, obj, arguments...);  // "calls" the object
+
+```
+
+</blockquote></details>
+
+## Documentation
+
 <details><summary> Documentation </summary><blockquote>
 
 <b>Public Macro Overview</b>

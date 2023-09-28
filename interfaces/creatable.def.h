@@ -2,9 +2,9 @@
 INCLUDE_OOPC
 
 /** convenience macros for creating, instantiating, and deleting an instance. Only works if type implements creatable as an interface */
-DEFINE NEW(type, ...) (type *) SPLIT(TYPE_NAME)(SPLIT(CLASS_MANGLE)(type)).Creatable__.new(SPLIT(VARIADIC_SIZE)(CATD(__VA, ARGS__, _)), CATD(__VA, ARGS__, _))
-DEFINE INIT(type, pinst, ...) SPLIT(TYPE_NAME)(SPLIT(CLASS_MANGLE)(type)).Creatable__.init(pinst, SPLIT(VARIADIC_SIZE)(CATD(__VA, ARGS__, _)), CATD(__VA, ARGS__, _))
-DEFINE DEL(type, pinst) SPLIT(TYPE_NAME)(SPLIT(CLASS_MANGLE)(type)).Creatable__.del(pinst)
+DEFINE NEW(type, ...) (type *) SPLIT(OOP_INTERFACE)(type, inst, Creatable).new(SPLIT(VARIADIC_SIZE)(CATD(__VA, ARGS__, _)), CATD(__VA, ARGS__, _))
+DEFINE INIT(type, pinst, ...) SPLIT(OOP_INTERFACE)(type, inst, Creatable).init(pinst, SPLIT(VARIADIC_SIZE)(CATD(__VA, ARGS__, _)), CATD(__VA, ARGS__, _))
+DEFINE DEL(type, pinst) SPLIT(OOP_INTERFACE)(type, inst, Creatable).del(pinst)
 
 /**
  * @interface Creatable creatable.h

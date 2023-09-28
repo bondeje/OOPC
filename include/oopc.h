@@ -253,6 +253,8 @@ CLASS_(\
 #define OOP_INTERFACE_3(A, inst, B) OOP_GET(A, inst, TYPE_NAME(B))
 #define OOP_INTERFACE(...) T_INSPECT_3(__VA_ARGS__, OOP_INTERFACE_3, OOP_INTERFACE_2)(__VA_ARGS__)
 
+#define OOP_CLASS(type) CLASS_MANGLE(type)
+
 // modify __INIT__ so that it calls a generic init algorithm that assigns the first element class__
 //#define INIT(name, inst) (inst).class__ = &OOP_CLASS_INST(name)
 #define OOP_INIT(name, inst) inst = (name) {.class__ = &OOP_CLASS_INST(name)}
