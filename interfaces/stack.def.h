@@ -1,0 +1,5 @@
+#include <oopc.h>
+IFNDEF STACK_H
+DEFINE STACK_H
+
+ENDIF // STACK_H

@@ -1,0 +1,5 @@
+#include <oopc.h>
+IFNDEF DEQUE_H
+DEFINE DEQUE_H
+
+ENDIF // DEQUE_H

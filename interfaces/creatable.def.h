@@ -1,4 +1,9 @@
 #include <oopc.h>
+IFNDEF CREATABLE_H
+DEFINE CREATABLE_H
+
+INCLUDE <allocatable.h>
+INCLUDE <initializable.h>
 INCLUDE_OOPC
 
 /** convenience macros for creating, instantiating, and deleting an instance. Only works if type implements creatable as an interface */
@@ -36,4 +41,8 @@ CLASS(Creatable,
     FUNCTION(NULL, void *, new, unsigned int, ...)
     FUNCTION(NULL, void, init, void *, unsigned int, ...)
     FUNCTION(NULL, void, del, void *)
+    EXTENDS(Allocatable)
+    EXTENDS(Initializable)
 )
+
+ENDIF // CREATABLE_H

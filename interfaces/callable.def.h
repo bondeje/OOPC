@@ -4,8 +4,6 @@
 
 // guard against defs.h files that are looking to import the MAKE_CALLABLE functionality.
 // TODO: need to block more of the file as MAKE_CALLABLE only should require the oopc.h header and the associated macros
-#ifndef IMPORT_MAKE_CALLABLE_H
-
 IFNDEF CALLABLE_H
 DEFINE CALLABLE_H
 
@@ -38,19 +36,14 @@ CLASS(Callable,
     MEMBER(call_t, call)   
 )
 
-ENDIF // CALLABLE_H
-
 // IMPORT_MAKE_CALLABLE_H defined
-#else 
+#ifdef IMPORT_MAKE_CALLABLE_H
 
-INCLUDE <oopc.h>
 INCLUDE <stdarg.h>
 
 #ifndef OOP_MEMBER_void
     #define OOP_MEMBER_void(x) x
 #endif
-
-#define GET_CALLABLE(type, func) Callable_##type##_##func
 
 #define TYPE_LIST_VA_LIST_TO_DECLS_0(va_list_, v_name, type) OOP_IF(IS_OOP_END(type))(ERASE_ARGS, TYPE_LIST_VA_LIST_TO_DECLS_NEXT)(va_list_, v_name, type, 1)
 #define TYPE_LIST_VA_LIST_TO_DECLS_1(va_list_, v_name, type) OOP_IF(IS_OOP_END(type))(ERASE_ARGS, TYPE_LIST_VA_LIST_TO_DECLS_NEXT)(va_list_, v_name, type, 0)
@@ -99,6 +92,6 @@ void GET_CALLABLE(type, func)(void * t_, ...) { \
         *pret = func(t_ TYPE_LIST_TO_ARGS(__VA_ARGS__)); \
     } \
 )
-
-
 #endif // IMPORT_MAKE_CALLABLE_H
+
+ENDIF // CALLABLE_H

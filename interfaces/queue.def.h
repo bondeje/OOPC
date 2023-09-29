@@ -1,0 +1,5 @@
+#include <oopc.h>
+IFNDEF QUEUE_H
+DEFINE QUEUE_H
+
+ENDIF // QUEUE_H

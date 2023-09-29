@@ -1,7 +1,9 @@
 #include <oop.h>
 #include <pptuples.h>
 
-#define INCLUDE_OOPC INCLUDE <oopc.h> OOP_NEWLINE INCLUDE_STDLIB OOP_NEWLINE INCLUDE_STDIO
+// do not want to include stdlib in final version
+//#define INCLUDE_OOPC INCLUDE <oopc.h> OOP_NEWLINE INCLUDE_STDLIB OOP_NEWLINE INCLUDE_STDIO
+#define INCLUDE_OOPC INCLUDE <oopc.h>
 
 /* name mangling */
 #define INST_MANGLE(name) CAT(name, __)
@@ -101,6 +103,7 @@
 #define OOP_CLASS_INST(name) PASS_ARGS(TYPE_NAME EMPTY()(CLASS_MANGLE(name)))
 #define MAKE_INIT(inst, type, type_ds) OOP_TAB SPLIT(OOP_CLASS_INST)(T_INSPECT_1 type_ds).init(&(inst-> SPLIT(TYPE_NAME)(T_INSPECT_1 type_ds))); OOP_NEWLINE
 
+// TODO: try to reuse EXTERNAL_CLASS(name, seq) and just append the structure definition
 #define CLASS_(name, seq)\
 IFNDEF OOP_MEMBER_##name OOP_NEWLINE OOP_TAB DEFINE OOP_MEMBER_##name( x RPAREN() x OOP_NEWLINE ENDIF \
 OOP_NEWLINE \
@@ -132,6 +135,8 @@ OOP_NEWLINE \
 OOP_NEWLINE \
 \
 \
+MAKE_CLASS_INIT(name, seq); \
+OOP_NEWLINE \
 struct name {                                                           \
 OOP_NEWLINE \
     MAKE_DECLS(G_FILTER(IS_INST_MEMBER, S_TO_G(seq))) \
@@ -140,8 +145,6 @@ OOP_NEWLINE \
 OOP_NEWLINE \
 \
 \
-MAKE_CLASS_INIT(name, seq); \
-OOP_NEWLINE \
 
 /*
 Below are extensions to the CLASS macro to provide default implementations for "new", "init", and 
@@ -206,6 +209,41 @@ CLASS_(\
     CLASS_MEMBER(void *, class__, NULL) \
     seq)
 
+// extend and external structure so that you can insert it into the type system. This will only work to make external structure a base class...cannot extend other classes
+#define EXTERNAL_CLASS(name, seq) \
+IFNDEF OOP_MEMBER_##name OOP_NEWLINE OOP_TAB DEFINE OOP_MEMBER_##name( x RPAREN() x OOP_NEWLINE ENDIF \
+OOP_NEWLINE \
+IFNDEF CATD(OOP_MEMBER, CLASS_MANGLE(name),_) OOP_NEWLINE OOP_TAB DEFINE CATD(OOP_MEMBER, CLASS_MANGLE(name),_)( x RPAREN() x OOP_NEWLINE ENDIF \
+OOP_NEWLINE \
+MAKE_MEMBER_DEFS(S_TO_G(seq))\
+OOP_NEWLINE \
+DEFINE OOP_CLASS_G_PARENT_##name BUILD_CLASS_G_HIER(G_FILTER(IS_PARENT_TYPE, S_TO_G(seq))) \
+OOP_NEWLINE \
+DEFINE OOP_CLASS_G_HIER_##name name) CAT(OOP_CLASS_G_HIER_, CLASS_MANGLE(name)) OOP_CLASS_G_PARENT_##name \
+OOP_NEWLINE \
+DEFINE CAT(OOP_CLASS_G_PARENT_, CLASS_MANGLE(name)) BUILD_CLASS_G_HIER(G_FILTER(IS_INTERFACE_TYPE, S_TO_G(seq))) \
+OOP_NEWLINE \
+DEFINE CAT(OOP_CLASS_G_HIER_, CLASS_MANGLE(name)) CLASS_MANGLE(name)) CAT(OOP_CLASS_G_PARENT_, CLASS_MANGLE(name)) \
+OOP_NEWLINE \
+DEFINE OOP_MEMBERS_G_##name G_FILTER(IS_INST_MEMBER, S_TO_G(seq)) \
+OOP_NEWLINE \
+DEFINE CAT(OOP_MEMBERS_G_, CLASS_MANGLE(name)) G_FILTER(IS_CLASS_MEMBER, S_TO_G(seq)) \
+OOP_NEWLINE \
+OOP_NEWLINE \
+TYPEDEF(struct name, name) \
+OOP_NEWLINE \
+TYPEDEF(struct CLASS_MANGLE(name), CLASS_MANGLE(name)) \
+OOP_NEWLINE \
+struct CLASS_MANGLE(name) { \
+OOP_NEWLINE \
+    MAKE_DECLS(G_FILTER(IS_CLASS_MEMBER, S_TO_G(seq))) \
+}; \
+OOP_NEWLINE \
+\
+\
+MAKE_CLASS_INIT(name, seq); \
+OOP_NEWLINE \
+
 #define OOP_BT_GET_CUR_CLASS(...) T_INSPECT_0(__VA_ARGS__)
 #define OOP_BG_GET_NAME(...) T_INSPECT_1(__VA_ARGS__)
 
@@ -259,5 +297,4 @@ CLASS_(\
 //#define INIT(name, inst) (inst).class__ = &OOP_CLASS_INST(name)
 #define OOP_INIT(name, inst) inst = (name) {.class__ = &OOP_CLASS_INST(name)}
 #define OOP_DECLARE(name, inst) name OOP_INIT(name, inst)
-#define OOP_NEW(name, pinst) name * pinst = (name *) malloc(sizeof(name)); OOP_INIT(name, *pinst);
 #define OOPC(func) OOP_##func EMPTY()

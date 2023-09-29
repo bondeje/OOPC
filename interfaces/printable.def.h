@@ -1,4 +1,8 @@
 #include <oopc.h>
+IFNDEF PRINTABLE_H
+DEFINE PRINTABLE_H
+
+INCLUDE <stddef.h>
 INCLUDE_OOP
 
 /**
@@ -17,3 +21,4 @@ CLASS(Printable,
     FUNCTION(NULL, long, c_str, void *, char *, size_t)
 )
 
+ENDIF // PRINTABLE_H
