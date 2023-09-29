@@ -4,13 +4,11 @@ CC = gcc
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
-BASE_NAME = diamond
-DEFS = defs.h
-TARGET_HEADER = classes.h
-TARGET_HEADER_FULL = $(current_dir)/$(TARGET_HEADER)
+BASE_NAME = test_sized
 
 PRE_CFLAGS = -E -P
-PRE_IFLAGS = -I../../include/ -I.
+PRE_IFLAGS = -I../../include/ -I. 
+PRE_BASE_DIR = ./
 
 CLEAN_SCRIPT = 
 
@@ -30,26 +28,26 @@ else
 	DEL_FILE = del /f
 endif
 
-all: build clean
+all: build_test
 
-#clean
+# clean
 
-build_classes: build_i build_defs
+build_classes: build_sized build_foobar
 
-pp_i:
-	$(CC) $(PRE_CFLAGS) $(PRE_IFLAGS) i.def.h -o $(current_dir)/i.h
+pp_sized:
+	$(CC) $(PRE_CFLAGS) $(PRE_IFLAGS) ../../interfaces/sized.def.h -o $(current_dir)/sized.h
 
-build_i: pp_i
-	$(CLEAN_SCRIPT) $(current_dir)/i.h
+build_sized: pp_sized
+	$(CLEAN_SCRIPT) $(current_dir)/sized.h
 
-pp_classes:
-	$(CC) $(PRE_CFLAGS) $(PRE_IFLAGS) classes.def.h -o $(current_dir)/classes.h
+pp_foobar:
+	$(CC) $(PRE_CFLAGS) $(PRE_IFLAGS) $(current_dir)/foobar.def.h -o $(current_dir)/foobar.h
 
-build_defs: pp_classes
-	$(CLEAN_SCRIPT) $(current_dir)/classes.h
+build_foobar: pp_foobar
+	$(CLEAN_SCRIPT) $(current_dir)/foobar.h
 
-build: build_classes
+build_test: build_classes
 	$(CC) $(CFLAGS) $(IFLAGS) $(BASE_NAME).c -o $(BASE_NAME)$(EXT)
 
 clean:
-	$(DEL_FILE) i.h classes.h
+	$(DEL_FILE) foobar.h sized.h

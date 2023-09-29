@@ -11,7 +11,7 @@
 #define CLASS_MANGLE(type) CAT(type, _CLASS)
 #define CLASS_INST(name) PASS_ARGS(TYPE_NAME EMPTY()(CLASS_MANGLE(name)))
 
-#define TYPEDEF(name, id) IFNDEF CAT(TYPEDEF_, id) OOP_NEWLINE OOP_TAB DEFINE CAT(TYPEDEF_, id) OOP_NEWLINE OOP_TAB typedef name id; OOP_NEWLINE ENDIF
+#define TYPEDEF(name, id) IFNDEF CAT(TYPEDEF_, id) OOP_NEWLINE OOP_TAB DEFINE CAT(TYPEDEF_, id) OOP_NEWLINE typedef name id; OOP_NEWLINE ENDIF
 
 /* class data structure algorithms */
 //#define OOP_CLASS_G_HIERARCHY(name) name) CLASS_MANGLE(name)) CATD(OOP_CLASS_G_PARENT, CLASS_MANGLE(name), _) OOP_CLASS_G_PARENT_##name
@@ -20,7 +20,7 @@
 #define OOP_MEMBER_MEMBER_TYPE(x) x
 #define IS_MEMBER_TYPE(type, ...) EQUAL(MEMBER_TYPE, type)
 #define MEMBER_(decl, type, name, value, size) (decl, type, name, value, size)
-#define MEMBER_2(type, name) (MEMBER_TYPE, MEMBER_(type name;, type, name, OOP_NO_DEFAULT, sizeof(type)))
+#define MEMBER_2(type, name) (MEMBER_TYPE, MEMBER_(type name;, type, name, (OOP_NO_DEFAULT), sizeof(type)))
 #define MEMBER_3(type, name, value) (MEMBER_TYPE, MEMBER_(type name;, type, name, (OOP_IF(IS_PAREN(value()))(OOP_NO_DEFAULT, value)), sizeof(type)))
 #define MEMBER(...) CAT(MEMBER, VARIADIC_SIZE(__VA_ARGS__))(__VA_ARGS__)
 
@@ -56,19 +56,33 @@
 #define EXTENDS_(decl, type, name, value, size) (type name;, type, name, value, sizeof(type))
 #define EXTENDS(type) (PARENT_TYPE, EXTENDS_(type name;, type, PARENT_MANGLE(type), (OOP_NO_DEFAULT), sizeof(type)))
 
+#define PAIRED_T_TO_INIT_NAME_0(type, name) OOP_IF(IS_OOP_END(name)) (ERASE_ARGS, PAIRED_T_TO_INIT_NAME_NEXT)(type, name, 0)
+#define PAIRED_T_TO_INIT_NAME_1(type, name) OOP_IF(IS_OOP_END(name)) (ERASE_ARGS, PAIRED_T_TO_INIT_NAME_NEXT)(type, name, 1)
+#define PAIRED_T_TO_INIT_NAME_NEXT(type, name, next) ERASE_ARGS OOP_GET(type, unused, name) = PAIRED_T_TO_INIT_VAL_##next(type, 
+#define PAIRED_T_TO_INIT_VAL_0(type, value) PAIRED_T_TO_INIT_VAL_NEXT(type, value, 1)
+#define PAIRED_T_TO_INIT_VAL_1(type, value) PAIRED_T_TO_INIT_VAL_NEXT(type, value, 0)
+#define PAIRED_T_TO_INIT_VAL_NEXT(type, value, next) value, PAIRED_T_TO_INIT_NAME_##next(type, 
+#define PAIRED_T_TO_INIT_(type, guide) PAIRED_T_TO_INIT_NAME_0(type, guide OOP_END)
+#define PAIRED_T_TO_INIT(type, ...) {PAIRED_T_TO_INIT_(type, S_TO_G(T_TO_S(__VA_ARGS__)))}
+
+/*
+// need to make this use OOP_GET() to work with nested interfaced
 #define PAIRED_T_TO_INIT_NAME_0(name) OOP_IF(IS_OOP_END(name)) ( ,.name = PAIRED_T_TO_INIT_VAL_0)
 #define PAIRED_T_TO_INIT_NAME_1(name) OOP_IF(IS_OOP_END(name)) ( ,.name = PAIRED_T_TO_INIT_VAL_1)
 #define PAIRED_T_TO_INIT_VAL_0(value) value, PAIRED_T_TO_INIT_NAME_1
 #define PAIRED_T_TO_INIT_VAL_1(value) value, PAIRED_T_TO_INIT_NAME_0
 #define PAIRED_T_TO_INIT_(seq) PAIRED_T_TO_INIT_NAME_0 seq(OOP_END)
 #define PAIRED_T_TO_INIT(...) {PAIRED_T_TO_INIT_(T_TO_S(__VA_ARGS__))}
+*/
 
 #define OOP_MEMBER_INTERFACE_TYPE(x) x
 #define IS_INTERFACE_TYPE(type, ...) EQUAL(INTERFACE_TYPE, type)
 #define INTERFACE_MANGLE(type) TYPE_NAME(type)
 #define IMPLEMENTS_(decl, type, name, vals, size) (type name;, type, name, vals, size)
 // variadic is a set of name, value pairs associating function names from interface to their implementations (value)
-#define IMPLEMENTS(type, ...) (INTERFACE_TYPE, IMPLEMENTS_(type name;, type, INTERFACE_MANGLE(type), (PAIRED_T_TO_INIT(__VA_ARGS__)), sizeof(type)))
+//#define IMPLEMENTS(type, ...) (INTERFACE_TYPE, IMPLEMENTS_(type name;, type, INTERFACE_MANGLE(type), (PAIRED_T_TO_INIT(__VA_ARGS__)), sizeof(type)))
+// PAIRED_T_TO_INIT that uses guide
+#define IMPLEMENTS(type, ...) (INTERFACE_TYPE, IMPLEMENTS_(type name;, type, INTERFACE_MANGLE(type), (PAIRED_T_TO_INIT(type, __VA_ARGS__)), sizeof(type)))
 
 /* implement an interface in an interface. maybe do not need this */
 #define IMPLEMENT(type, ...) INTERFACE_MANGLE(type), ({.class__ = CLASS_MANGLE(type) PAIRED_T_TO_INIT(__VA_ARGS__)})
@@ -84,7 +98,7 @@
 
 // recursive inspection of 1 element guide
 #define MAKE_MEMBER_DEFS(members_g) G_JOIN_(MAKE_MEMBER_DEF, members_g OOP_END)
-#define MAKE_MEMBER_DEF_(member) HASH_LIT ifndef CAT(OOP_MEMBER_, member) OOP_NEWLINE OOP_TAB HASH_LIT define CAT(OOP_MEMBER_, member)( x RPAREN() x OOP_NEWLINE HASH_LIT endif OOP_NEWLINE
+#define MAKE_MEMBER_DEF_(member) HASH_LIT ifndef CAT(OOP_MEMBER_, member) OOP_NEWLINE OOP_TAB HASH_LIT define CAT(OOP_MEMBER_, member)( x ) x OOP_NEWLINE HASH_LIT endif OOP_NEWLINE
 #define MAKE_MEMBER_DEF(type, type_ds) MAKE_MEMBER_DEF_(SPLIT(GET_NAME)(type, type_ds))
 
 #define GET_MEMBER_NAMES(name) G_TO_G(GET_NAME, OOP_MEMBERS_G_##name)
@@ -102,6 +116,29 @@
 #define OOP_INIT_REQS(name, inst, seq) OOP_TAB inst->class__ = &OOP_CLASS_INST(name); OOP_NEWLINE G_JOIN(PASS_ARGS, G_TO_G_A(MAKE_INIT, inst, G_FILTER(IS_PARENT_TYPE, S_TO_G(seq))))
 #define OOP_CLASS_INST(name) PASS_ARGS(TYPE_NAME EMPTY()(CLASS_MANGLE(name)))
 #define MAKE_INIT(inst, type, type_ds) OOP_TAB SPLIT(OOP_CLASS_INST)(T_INSPECT_1 type_ds).init(&(inst-> SPLIT(TYPE_NAME)(T_INSPECT_1 type_ds))); OOP_NEWLINE
+
+#define OOP_CLASS_STRUCT_DECLS(name, seq) \
+IFNDEF OMIT_STRUCT_DECLS \
+OOP_NEWLINE \
+TYPEDEF(struct name, name) \
+OOP_NEWLINE \
+TYPEDEF(struct CLASS_MANGLE(name), CLASS_MANGLE(name)) \
+OOP_NEWLINE \
+struct CLASS_MANGLE(name) { \
+OOP_NEWLINE \
+    MAKE_DECLS(G_FILTER(IS_CLASS_MEMBER, S_TO_G(seq))) \
+}; \
+OOP_NEWLINE \
+\
+MAKE_CLASS_INIT(name, seq); \
+OOP_NEWLINE \
+struct name {                                                           \
+OOP_NEWLINE \
+    MAKE_DECLS(G_FILTER(IS_INST_MEMBER, S_TO_G(seq))) \
+OOP_NEWLINE \
+}; \
+OOP_NEWLINE \
+ENDIF // OMIT_STRUCT_DECLS
 
 // TODO: try to reuse EXTERNAL_CLASS(name, seq) and just append the structure definition
 #define CLASS_(name, seq)\
@@ -124,27 +161,7 @@ OOP_NEWLINE \
 DEFINE CAT(OOP_MEMBERS_G_, CLASS_MANGLE(name)) G_FILTER(IS_CLASS_MEMBER, S_TO_G(seq)) \
 OOP_NEWLINE \
 OOP_NEWLINE \
-TYPEDEF(struct name, name) \
-OOP_NEWLINE \
-TYPEDEF(struct CLASS_MANGLE(name), CLASS_MANGLE(name)) \
-OOP_NEWLINE \
-struct CLASS_MANGLE(name) { \
-OOP_NEWLINE \
-    MAKE_DECLS(G_FILTER(IS_CLASS_MEMBER, S_TO_G(seq))) \
-}; \
-OOP_NEWLINE \
-\
-\
-MAKE_CLASS_INIT(name, seq); \
-OOP_NEWLINE \
-struct name {                                                           \
-OOP_NEWLINE \
-    MAKE_DECLS(G_FILTER(IS_INST_MEMBER, S_TO_G(seq))) \
-OOP_NEWLINE \
-}; \
-OOP_NEWLINE \
-\
-\
+OOP_CLASS_STRUCT_DECLS(name, seq)
 
 /*
 Below are extensions to the CLASS macro to provide default implementations for "new", "init", and 
@@ -230,6 +247,8 @@ OOP_NEWLINE \
 DEFINE CAT(OOP_MEMBERS_G_, CLASS_MANGLE(name)) G_FILTER(IS_CLASS_MEMBER, S_TO_G(seq)) \
 OOP_NEWLINE \
 OOP_NEWLINE \
+IFNDEF OOP_IMPORT_DEFS(name) \
+OOP_NEWLINE \
 TYPEDEF(struct name, name) \
 OOP_NEWLINE \
 TYPEDEF(struct CLASS_MANGLE(name), CLASS_MANGLE(name)) \
@@ -243,6 +262,7 @@ OOP_NEWLINE \
 \
 MAKE_CLASS_INIT(name, seq); \
 OOP_NEWLINE \
+ENDIF
 
 #define OOP_BT_GET_CUR_CLASS(...) T_INSPECT_0(__VA_ARGS__)
 #define OOP_BG_GET_NAME(...) T_INSPECT_1(__VA_ARGS__)
@@ -298,3 +318,5 @@ OOP_NEWLINE \
 #define OOP_INIT(name, inst) inst = (name) {.class__ = &OOP_CLASS_INST(name)}
 #define OOP_DECLARE(name, inst) name OOP_INIT(name, inst)
 #define OOPC(func) OOP_##func EMPTY()
+
+#define OOP_IMPORT_INTERFACE(interface)

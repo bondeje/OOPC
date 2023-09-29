@@ -236,4 +236,5 @@ OOP_IF(OOP_AND(IS_COMPARABLE(x), IS_COMPARABLE(y)) )\
 #define S_REV_NEXT(seq_out, next, ...) S_REV_##next(OOP_GET_ACCESS(seq_out, __VA_ARGS__), 
 #define S_REV_ S_REV_0
 #define S_REV__(guide) S_REV_( , guide OOP_END)
-#define S_REV(seq) S_REV__(S_TO_G(seq))
+//#define S_REV(seq) OOP_IF(S_IS_EMPTY())(., S_REV__(S_TO_G(seq)))
+#define S_REV(seq) OOP_IF(S_IS_EMPTY(seq))(., S_REV__(S_TO_G(seq)))
