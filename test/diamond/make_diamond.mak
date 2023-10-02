@@ -32,8 +32,6 @@ endif
 
 all: build clean
 
-#clean
-
 build_classes: build_i build_defs
 
 pp_i:

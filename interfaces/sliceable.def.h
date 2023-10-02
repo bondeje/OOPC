@@ -1,3 +1,5 @@
+// very much in works!
+
 // to be sliceable is a specific type of iteration, mostly for sequences, where a subset of (start, stop, step) are used to control access
 // to an underlying container
 

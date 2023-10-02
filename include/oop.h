@@ -157,10 +157,17 @@ OOP_IF(OOP_AND(IS_COMPARABLE(x), IS_COMPARABLE(y)) )\
 #define IS_IN_S(x, seq) IS_IN_G(x, S_TO_G(seq))
 
 // S_JOIN only combines the elements in the sequence, but it cannot put in delimiters. for that, use G_JOIN
+// I don't think this is used and does not necessarily make sense
 #define S_JOIN_0(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, S_JOIN_NEXT)((__VA_ARGS__), 1)
 #define S_JOIN_1(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, S_JOIN_NEXT)((__VA_ARGS__), 0)
 #define S_JOIN_NEXT(vals, next) PASS_ARGS_ vals S_JOIN_##next
-#define S_JOIN(seq) S_JOIN_(seq(OOP_END))
+#define S_JOIN(seq) S_JOIN_0(seq(OOP_END))
+
+// sequence to tuple
+#define S_TO_T_0(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, S_TO_T_NEXT)((__VA_ARGS__), 1)
+#define S_TO_T_1(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))(ERASE_ARGS, S_TO_T_NEXT)((__VA_ARGS__), 0)
+#define S_TO_T_NEXT(vals, next) , PASS_ARGS_ vals S_TO_T_##next
+#define S_TO_T(seq) PASS_ARGS(OOP_IF(S_IS_EMPTY(seq))(ERASE_ARGS, PASS_ARGS_ S_1ST(seq) S_TO_T_0 ERASE_ARGS) seq(OOP_END))
 
 // erase of the remainder of a guide. Note that if guide iteration has already started, need to call PASS_ARGS(G_ERASE_ LPAREN() guide)
 #define G_ERASE_0(...) OOP_IF(IS_OOP_END(T_INSPECT_0(__VA_ARGS__)))( , G_ERASE_1 LPAREN())

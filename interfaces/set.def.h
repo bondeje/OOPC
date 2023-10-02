@@ -16,7 +16,6 @@ CLASS(Set,
 CLASS(MutableSet,
     FUNCTION(NULL, int, add, void *, void *)
     FUNCTION(NULL, int, discard, void *, void *)
-    FUNCTION(NULL, int, remove, void *, void *)
     EXTENDS(Set)
 )
 

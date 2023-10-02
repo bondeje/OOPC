@@ -299,7 +299,14 @@ ENDIF
 #define G_SEARCH_ G_SEARCH_0
 #define G_SEARCH(namespace, member, hier) G_SEARCH_(namespace, member, hier OOP_END)
 #define OOP_GET(class, inst, member) (inst) S_REV(G_SEARCH((class, ), member, OOP_CLASS_G_HIER_##class)) member
-
+/*
+// redefine OOP_GET(class, inst, member) to OOP_GET_MEMBER and make the following definitions
+#define OOP_GET_0(class, inst, next, seq) OOP_IF(IS_OOP_END(T_INSPECT_0 S_1ST(seq)))(OOP_GET_(class, inst, next) ERASE_ARGS, OOP_GET_NEXT)(class, inst, next, seq, 1)
+#define OOP_GET_1(class, inst, next, seq) OOP_IF(IS_OOP_END(T_INSPECT_0 S_1ST(seq)))(OOP_GET_(class, inst, next) ERASE_ARGS, OOP_GET_NEXT)(class, inst, next, seq, 0)
+#define OOP_GET_NEXT(class, inst, next, seq, next_ind) OOP_GET_##next_ind(next, OOP_GET_MEMBER(class, inst, next), PASS_ARGS S_1ST(seq), ERASE_ARGS seq)
+#define OOP_GET_(class, inst, seq) OOP_GET_0(class, inst, PASS_ARGS_ S_1ST(seq), ERASE_ARGS seq)
+#define OOP_GET(class, inst, ...) OOP_GET_(class, inst, T_TO_S(__VA_ARGS__)(OOP_END))
+*/
 
 //#define OOP_GET(class, inst, member) OOP_IF(IS_IN_G(member, GET_MEMBER_NAMES(class)))( (inst).member ERASE_ARGS, not yet implemented ERASE_ARGS)(class, member)
 #define OOP_SUPER_2(A, inst) (inst). TYPE_NAME(G_1ST(OOP_CLASS_G_PARENT_##A))
@@ -320,3 +327,5 @@ ENDIF
 #define OOPC(func) OOP_##func EMPTY()
 
 #define OOP_IMPORT_INTERFACE(interface)
+
+#define OOP_UNIQUE_VAR_NAME(basename) CATD(basename,__LINE__, _)

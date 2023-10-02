@@ -1,8 +1,8 @@
 # OOPC
 
-OOPC (read: "oopsie") is a set of macro header files and meta data structures written in the C preprocessor to generate boiler plate code to facilitate the creation of a "type" system for object-oriented programming in the C language. Different from other implementations I have seen is that the only non-C standard components used are macro iterations (widely implemented in C compilers) and a simple script to insert newlines. The outputs are standard C (C99+) header files/code. No external tooling. 
+OOPC (read: "oopsie") is a framework consisting of a set of macro header files and meta data structures written in the C preprocessor. Combined, they generate boiler plate code facilitating the creation of a "type" system for object-oriented programming in the C language. Different from other implementations of OOP in C I have seen is that the only non-C standard components used are macro iterations (widely implemented in C compilers) and a simple script to insert newlines. The outputs are standard C (C99+) header files/code. No external tooling. 
 
-OOPC has multiple inheritance and distinct interfacing and does so without any upcasting/downcasting or having to do tricky pointer offsets.
+OOPC has multiple inheritance and interfaces for polymorphism, which is implemented without any upcasting/downcasting or having to do tricky pointer offsets. Type safety is provided up until the point most of the interfaces are implemented by a user as polymorphism ultimately needs some generic objects. For full type safety, the macros can be wrapped to form primitive templates, but as of now, construction of templates may be tedious and error-prone.
 
 ## Potential and Applied Concepts
 
@@ -293,3 +293,9 @@ Currently it will only work with GCC and on Windows (tested with MINGW64 on MSYS
 
 - gcc, clang, or any c compiler with C99-compliant preprocessor that ALSO expands re-entrant macros iteratively. The last part being non-standard, but is widely adopted. Note that tcc will expand, but probably does it recursively and so these headers can break
 - A shell script that replaces "OOP_NEWLINE" and "OOP_TAB" with the appropriate newline characters and spaces/tabs. The latter is so that the resulting headers are not garbage to look at, but the replacement of "OOP_NEWLINE" is essential to functionality. Unfortunately, a separate pass is needed because C preprocessors do not have facilities to introduce newlines, which is required to have a preprocessor output have valid directives
+
+## High-level TODOs
+
+- Inheritance graph searches proceed in depth-first left-right order for multiple inheritance. This produces problems--at least perceived but I would describe as un-intended--especially in the [Diamond problem](https://peps.python.org/pep-0253/). The plan is to first implement an explicit inheritance graph navigation to OOP_GET so that explicit routes or guidance can be taken to retrieve a member. When I figure out how to implement [C3 linearization](https://en.wikipedia.org/wiki/C3_linearization), that will supersede the depth-first left-right methodology. As long as the diamond problem is avoided or explicit paths are given when using OOP_GET, this will not break behavior. Thankfully, I have not decided to go the Python path where everything is an object and everything inherits from object, which guarantees the issues in the PEP-253 Diamond problem. 
+- replace the scripts with a separate programe. This would make the order of operations a little complicated as a separate binary would need to be built to build the actual project, but would eliminate OS-dependent scripts and maybe even allow for use with non-hosted environments, though I already know `string.h` missing will be an issue.
+- Interfaces currently require extensive use of `void *` to stand in for arbitrary objects. It is possible with the current implementation to template interfaces and specify the types in these cases (and fully make this OOP methodology type-safe), but a standard method for referring to those template instances with a common interface name (otherwise they would be pretty bad interfaces) is missing and needs development.
