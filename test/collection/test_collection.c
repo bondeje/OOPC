@@ -97,7 +97,8 @@ size_t FooBar_len(void * fb) {
 
 int main() {
     OOP_DECLARE(FooBar, fb);
-    INIT(FooBar, &fb, "pneumonoultramicroscopicsilicovolcanoconiosis");
+    //INIT(FooBar, &fb, "pneumonoultramicroscopicsilicovolcanoconiosis");
+    fb.str = "pneumonoultramicroscopicsilicovolcanoconiosis";
 
     printf("string in initialized FooBar: %s\nlength = %zu\n", fb.str, LEN(FooBar, &fb));
 
@@ -107,15 +108,16 @@ int main() {
     ITER(FooBar, &fb, &fbi);
     char c = *(char *) NEXT(FooBarIterator, &fbi);
     while (STOP(FooBarIterator, &fbi) != ITERATOR_STOP) {
-        printf("%c\n", c);
+        printf("%c ", c);
         c = *(char *) NEXT(FooBarIterator, &fbi);
     }
 
     printf("\nTrying to iterate with FOR_EACH...\n");
 
     FOR_EACH(char, c, FooBar, &fb, FooBarIterator) {
-        printf("%c\n", *c);
+        printf("%c ", *c);
     }
+    printf("\n");
 
     c = 'v';
     printf("is %c in initialized FooBar: %d\n", c, CONTAINS(FooBar, &fb, &c));

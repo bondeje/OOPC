@@ -4,6 +4,7 @@
 #include <string.h>
 #include <foobar.h>
 
+/*
 void FooBar_init_(FooBar * fb, char * str) {
     fb->str = str;
 }
@@ -45,6 +46,7 @@ int FooBar_del(void * fb) {
     free(fb);
     return 0;
 }
+*/
 
 bool FooBar_contains(void * fb, void * c) {
     return strchr(OOP_GET(FooBar, *(FooBar *)fb, str), *(char *)c) != NULL;
@@ -53,7 +55,8 @@ bool FooBar_contains(void * fb, void * c) {
 int main() {
     char c;
     OOP_DECLARE(FooBar, fb);
-    INIT(FooBar, &fb, "what is foobar?");
+    //INIT(FooBar, &fb, "what is foobar?");
+    fb.str = "what is foobar?";
     printf("string in initialized FooBar: %s\n", OOP_GET(FooBar, fb, str));
 
     c = 'a';
@@ -63,16 +66,17 @@ int main() {
     c = '?';
     printf("is %c in initialized FooBar: %d\n", c, CONTAINS(FooBar, &fb, &c));
 
-    FooBar * fb2 = NEW(FooBar, "what's in a name?");
-    printf("string in alloc'd FooBar: %s\n", OOP_GET(FooBar, *fb2, str));
+    fb.str = "what's in a name?";
+    //FooBar * fb2 = NEW(FooBar, "what's in a name?");
+    printf("string in alloc'd FooBar: %s\n", OOP_GET(FooBar, fb, str));
 
     c = 'a';
-    printf("is %c in alloc'd FooBar: %d\n", c, CONTAINS(FooBar, fb2, &c));
+    printf("is %c in alloc'd FooBar: %d\n", c, CONTAINS(FooBar, &fb, &c));
     c = 'z';
-    printf("is %c in alloc'd FooBar: %d\n", c, CONTAINS(FooBar, fb2, &c));
+    printf("is %c in alloc'd FooBar: %d\n", c, CONTAINS(FooBar, &fb, &c));
     c = '?';
-    printf("is %c in alloc'd FooBar: %d\n", c, CONTAINS(FooBar, fb2, &c));
+    printf("is %c in alloc'd FooBar: %d\n", c, CONTAINS(FooBar, &fb, &c));
     
-    DEL(FooBar, fb2);
+    //DEL(FooBar, fb2);
     return 0;
 }

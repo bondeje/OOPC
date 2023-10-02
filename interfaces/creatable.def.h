@@ -33,7 +33,6 @@ DEFINE DEL(type, pinst) SPLIT(OOP_INTERFACE)(type, *pinst, Creatable).del(pinst)
 CLASS(Creatable,
     FUNCTION(NULL, void *, new, unsigned int, ...)
     FUNCTION(NULL, int, del, void *)
-    EXTENDS(Initializable)
 )
 
 ENDIF // CREATABLE_H

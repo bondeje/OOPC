@@ -10,6 +10,11 @@ INCLUDE_OOPC
 Most containers implicitly need to INHERIT from the Comparable class/interface.
 */
 
+/*
+consider adding the following functions:
+
+*/
+
 DEFINE CONTAINS(type, pinst, parg) SPLIT(OOP_INTERFACE)(type, *pinst, Container).contains(pinst, parg)
 
 /**
@@ -18,7 +23,6 @@ DEFINE CONTAINS(type, pinst, parg) SPLIT(OOP_INTERFACE)(type, *pinst, Container)
  */
 CLASS(Container,
     FUNCTION(NULL, bool, contains, void *, void *)
-    EXTENDS(Creatable)
 )
 
 ENDIF // CONTAINER_H

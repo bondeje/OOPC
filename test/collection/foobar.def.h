@@ -35,9 +35,11 @@ size_t FooBar_len(void *);
 CLASS(FooBar,
     MEMBER(char *, str)
     IMPLEMENTS(Iterable, iter, FooBar_iter)
-    IMPLEMENTS(Container, contains, FooBar_contains, new, FooBar_new, del, FooBar_del, init, FooBar_init)
+    IMPLEMENTS(Container, contains, FooBar_contains)
     IMPLEMENTS(Sized, len, FooBar_len)
 )
+
+//IMPLEMENTS(Container, contains, FooBar_contains, new, FooBar_new, del, FooBar_del, init, FooBar_init)
 
 CLASS(FooBarIterator,
     MEMBER(FooBar *, fb)
