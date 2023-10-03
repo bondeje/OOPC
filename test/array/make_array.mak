@@ -28,9 +28,7 @@ else
 	DEL_FILE = del /f
 endif
 
-all: build_test 
-
-#clean
+all: build_test clean
 
 build_classes: build_initializable build_creatable build_sized build_container build_iteration build_collection build_reversible build_sequence build_slice build_array build_array_c
 

@@ -28,9 +28,7 @@ else
 	DEL_FILE = del /f
 endif
 
-all: build_test
-
-#clean
+all: build_test clean
 
 build_classes: build_iteration build_slice
 
@@ -48,7 +46,6 @@ build_slice: pp_slice
 
 build_test: build_classes
 	$(CC) $(CFLAGS) $(IFLAGS) ../../objects/slice.c $(BASE_NAME).c -o $(BASE_NAME)$(EXT)
-#
 
 clean:
 	$(DEL_FILE) foobar.h iteration.h slice.h
