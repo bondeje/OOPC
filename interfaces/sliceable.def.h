@@ -8,25 +8,20 @@
 IFNDEF SLICEABLE_H
 DEFINE SLICEABLE_H
 
-INCLUDE <sequence.h>
+INCLUDE <sized.h> // the Sized interface is potentially used if SLICE() is called with 4 arguments
 INCLUDE_OOPC
 
+// In order to use SLICE with 3 or 4 variable arguments (only specifying start or no parts of the slice), the object must also satisfy the Sized interface
+DEFINE SLICE_1(SliceableType, psrc, pdest, start) SLICE_4(SliceableType, psrc, pdest, 0, OOPC(INTERFACE)(SliceableType, *psrc, Sized).len(psrc), 1)
+DEFINE SLICE_2(SliceableType, psrc, pdest, start) SLICE_4(SliceableType, psrc, pdest, start, OOPC(INTERFACE)(SliceableType, *psrc, Sized).len(psrc), 1)
+DEFINE SLICE_3(SliceableType, psrc, pdest, start, stop) SLICE_4(SliceableType, psrc, pdest, start, stop, (stop >= start ? 1 : -1))
+DEFINE SLICE_4(SliceableType, psrc, pdest, start, stop, step) OOPC(INTERFACE)(SliceableType, *psrc, Sliceable).slice(psrc, pdest, 3, start, stop, step)
+DEFINE SLICE(SliceableType, psrc, ...) SPLIT(CAT)(SLICE_, SPLIT(VARIADIC_SIZE)(__VA_ARGS__))(SliceableType, psrc, __VA_ARGS__)
 
-// slices themselves are Iterable Iterators and can only be created by items satisfying the Sequence interface
-// These macros instantiate a sequence with another sequence
-// if pseq_dest is NULL, return a new Sequence using the SequenceType's implementation of new
-DEFINE SLICE_1(SequenceType, pseq_dest, pseq_src, start) SLICE_3(SequenceType, pseq_dest, pseq_src, start, OOPC(INTERFACE)(SequenceType, *pseq_src, Sized).len(pseq_src), 1)
-DEFINE SLICE_2(SequenceType, pseq_dest, pseq_src, start, stop) SLICE_3(SequenceType, pseq_dest, pseq_src, start, stop, 1)
-DEFINE SLICE_3(SequenceType, pseq_dest, pseq_src, start, stop, step) // TODO: copy elements iterating over slice from src into destination
-DEFINE SLICE(SequenceType, pseq_dest, pseq_src, ...) CATD(SLICE, VARIADIC_SIZE(__VA_ARGS__), _)(SequenceType, pseq_inst, __VA_ARGS__)
-
-CLASS(Slice,
-    MEMBER(size_t, loc)
-    MEMBER(size_t, start)
-    MEMBER(size_t, stop)
-    MEMBER(long long, step)
-    IMPLEMENTS(Iterator, next, [insert next implementation], stop, [insert stop implementation])
-    IMPLEMENTS(Iterable, iter, [insert iter implementation])
+// semantics of slice function is that it takes a collection and initializes another object with a copy of that collection using only the elements defined by a Slice (start, [stop, [step]])
+// since Slice takes indices, this is mostly applicable to collections that satisify the Sequence interface, but could be more general, e.g. every other item in a LinkedList could be collected this way
+CLASS(Sliceable,
+    FUNCTION(NULL, int slice(void *, void *, unsigned int, ...))
 )
 
 ENDIF // SLICEABLE_H

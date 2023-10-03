@@ -3,12 +3,15 @@ IFNDEF ITERATION_H
 DEFINE ITERATION_H
 INCLUDE_OOPC
 
+// return types for *_next should be constant pointers
+
 IFNDEF OMIT_STRUCT_DECLS
 enum iterator_status {
     ITERATOR_FAIL = -1,
     ITERATOR_GO,
     ITERATOR_STOP,
     ITERATOR_PAUSE,
+    ITERATOR_STOP_1
 };
 ENDIF
 

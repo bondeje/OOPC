@@ -10,6 +10,13 @@ INCLUDE <stddef.h>
 ENDIF
 INCLUDE_OOPC
 
+// some of these would belong in a utility setup or just push to oopc.h. They are also defined in slice.h
+DEFINE IS_NEG(x) (!((x) > 0) && ((x) != 0))
+DEFINE CYCLE_TO_POS(x, size) (IS_NEG(x) ? size - (-x) : x)
+
+// accepts negative indices
+DEFINE GET(SequenceType, pseq, index) OOPC(INTERFACE)(SequenceType, *pseq, Sequence).get(pseq, CYCLE_TO_POS(index, OOPC(INTERFACE)(SequenceType, *pseq, Sized).len(pseq)))
+
 // Sequence interface
 CLASS(Sequence,
     FUNCTION(NULL, void *, get, void *, size_t)
