@@ -10,12 +10,9 @@ INCLUDE_OOPC
 Most containers implicitly need to INHERIT from the Comparable class/interface.
 */
 
-/*
-consider adding the following functions:
-
-*/
-
 DEFINE CONTAINS(type, pinst, parg) SPLIT(OOP_INTERFACE)(type, *pinst, Container).contains(pinst, parg)
+// a little stupid, but to be like 'in' in Python
+DEFINE IN(parg, type, pinst) CONTAINS(type, pinst, parg)
 
 /**
  * contains takes as its first argument an instance of the class that implements Container and as its second argument, any arbitrary object.

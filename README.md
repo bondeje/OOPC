@@ -12,6 +12,8 @@ OOPC also has convenience macros (still very experimental) to allow 3rd party st
 
 <details><summary> Callable objects </summary><blockquote>
 
+<b> TODO: This needs to be updated to reflect MAKE_CALLABLE vs MAKE_CALLABLE_IMPLEMENTATION
+
 The `callable.def.h` file creates a callable object struct and associated macros that allow a user to implement an interface for another struct to be "callable". "Callable" here means there is a one-to-one association of the object to a function. In Python, this simply looks like 
 ```
 class ObjToCall:
@@ -29,14 +31,14 @@ Since in pure C, we cannot make a struct executable, we cannot make the syntax w
 TYPEDEF(struct ObjToCall, ObjToCall)
 return_type my_func(ObjToCall *, other args...); // the function I want to call when "calling" the instance of ObjToCall. Implementation in some .c file
 
-// if my_func returns void and the "other args" is actually a variadic, done. Otherwise, have wrap the function with the MAKE_CALLABLE macro
+// if my_func returns int and the "other args" is actually a variadic, done. Otherwise, have wrap the function with the MAKE_CALLABLE macro
 // define the class if my_func did not require MAKE_CALLABLE() macro
 CLASS(ObjToCall,
     /* class declarations */
     IMPLEMENTS(Callable, call, my_func)
 )
 
-// else if MAKE_CALLABLE() macro was required
+// else if MAKE_CALLABLE() macro was required (in .c source as this )
 MAKE_CALLABLE(ObjToCall, return_type, my_func, other arg types...)
 CLASS(ObjToCall,
     /* class declarations */
@@ -44,7 +46,7 @@ CLASS(ObjToCall,
 )
 
 // to use
-DECLARE(ObjToCall, obj)
+OOP_DECLARE(ObjToCall, obj);
 /* init obj code however you wish */
 CALL(ObjToCall, obj, arguments...);  // "calls" the object
 
