@@ -3,14 +3,10 @@ IFNDEF CONTAINER_H
 DEFINE CONTAINER_H
 
 INCLUDE <stdbool.h>
-INCLUDE <creatable.h>
 INCLUDE_OOPC
 
-/*
-Most containers implicitly need to INHERIT from the Comparable class/interface.
-*/
-
 DEFINE CONTAINS(type, pinst, parg) SPLIT(OOP_INTERFACE)(type, *pinst, Container).contains(pinst, parg)
+DEFINE IS_EMPTY(type, pinst) SPLIT(OOP_INTERFACE)(type, *pinst, Container).is_empty(pinst)
 // a little stupid, but to be like 'in' in Python
 DEFINE IN(parg, type, pinst) CONTAINS(type, pinst, parg)
 
@@ -20,6 +16,7 @@ DEFINE IN(parg, type, pinst) CONTAINS(type, pinst, parg)
  */
 CLASS(Container,
     FUNCTION(NULL, bool, contains, void *, void *)
+    FUNCTION(NULL, bool, is_empty, void *)
 )
 
 ENDIF // CONTAINER_H

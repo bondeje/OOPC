@@ -32,10 +32,14 @@ int FooBar_init(void *, unsigned int, ...);
 // sized.h
 size_t FooBar_len(void *);
 
+static inline bool FooBar_is_empty(void * st_) {
+    return FooBar_len(st_) == 0;
+}
+
 CLASS(FooBar,
     MEMBER(char *, str)
     IMPLEMENTS(Iterable, iter, FooBar_iter)
-    IMPLEMENTS(Container, contains, FooBar_contains)
+    IMPLEMENTS(Container, contains, FooBar_contains, is_empty, FooBar_is_empty)
     IMPLEMENTS(Sized, len, FooBar_len)
 )
 

@@ -100,7 +100,7 @@ int main() {
     //INIT(FooBar, &fb, "pneumonoultramicroscopicsilicovolcanoconiosis");
     fb.str = "pneumonoultramicroscopicsilicovolcanoconiosis";
 
-    printf("string in initialized FooBar: %s\nlength = %zu\n", fb.str, LEN(FooBar, &fb));
+    printf("string in initialized FooBar: %s\nlength = %zu\nis empty? %d", fb.str, LEN(FooBar, &fb), IS_EMPTY(FooBar, &fb));
 
     printf("\nIterate with while loop...\n");
 

@@ -52,14 +52,22 @@ bool FooBar_contains(void * fb, void * c) {
     return strchr(OOP_GET(FooBar, *(FooBar *)fb, str), *(char *)c) != NULL;
 }
 
+bool FooBar_is_empty(void * fb) {
+    return (!fb || !((FooBar *)fb)->str || !strlen(((FooBar *)fb)->str));
+}
+
 int main() {
     char c;
     OOP_DECLARE(FooBar, fb);
     //INIT(FooBar, &fb, "what is foobar?");
+    printf("uninitialized FooBar string is empty? %d\n", IS_EMPTY(FooBar, &fb));
+    fb.str = "";
+    printf("empty string literal FooBar is empty? %d\n", IS_EMPTY(FooBar, &fb));
     fb.str = "what is foobar?";
     printf("string in initialized FooBar: %s\n", OOP_GET(FooBar, fb, str));
+    printf("FooBar is empty? %d\n", IS_EMPTY(FooBar, &fb));
 
-    c = 'a';
+    c = 'n';
     printf("is %c in initialized FooBar: %d\n", c, CONTAINS(FooBar, &fb, &c));
     c = 'z';
     printf("is %c in initialized FooBar: %d\n", c, CONTAINS(FooBar, &fb, &c));
@@ -70,7 +78,7 @@ int main() {
     //FooBar * fb2 = NEW(FooBar, "what's in a name?");
     printf("string in alloc'd FooBar: %s\n", OOP_GET(FooBar, fb, str));
 
-    c = 'a';
+    c = 'n';
     printf("is %c in alloc'd FooBar: %d\n", c, CONTAINS(FooBar, &fb, &c));
     c = 'z';
     printf("is %c in alloc'd FooBar: %d\n", c, CONTAINS(FooBar, &fb, &c));
