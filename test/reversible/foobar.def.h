@@ -10,7 +10,7 @@ INCLUDE_OOPC
 
 int FooBar_iter(void *, void *);
 int FooBarIterator_iter(void *, void *);
-void * FooBarIterator_next(void *);
+int FooBarIterator_next(void *, void *);
 int FooBarIterator_stop(void *);
 int FooBar_reverse(void *);
 int FooBar_reversed(void *, void *);
@@ -25,7 +25,7 @@ CLASS(FooBarIterator,
     MEMBER(FooBar *, fb)
     MEMBER(char *, pccur)
     MEMBER(char *, pcstop)
-    MEMBER(enum iterator_status, stop)
+    MEMBER(enum iterator_status, stop_)
     IMPLEMENTS(Iterator, next, FooBarIterator_next, stop, FooBarIterator_stop, iter, FooBarIterator_iter)
 )
 

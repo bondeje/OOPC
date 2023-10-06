@@ -132,8 +132,9 @@ OOP_IF(OOP_AND(IS_COMPARABLE(x), IS_COMPARABLE(y)) )\
 // the next two lines are original, they might resolve better
 //#define S_IF_0(cond, result) T_INSPECT_1(OOP_IF(IS_OOP_END(cond))(PASS_ARGS, ERASE_ARGS)(,), OOP_IF(cond)(result S_ERASE_0, S_IF_1))
 //#define S_IF_1(cond, result) T_INSPECT_1(OOP_IF(IS_OOP_END(cond))(PASS_ARGS, ERASE_ARGS)(,), OOP_IF(cond)(result S_ERASE_0, S_IF_0))
-#define S_IF_0(cond, result) OOP_IF(IS_OOP_END(cond))( , OOP_IF(cond)(result S_ERASE_0, S_IF_1))
-#define S_IF_1(cond, result) OOP_IF(IS_OOP_END(cond))( , OOP_IF(cond)(result S_ERASE_0, S_IF_0))
+#define S_IF_0(cond, result) OOP_IF(IS_OOP_END(cond))(ERASE_ARGS, S_IF_NEXT)(cond, result, 1)
+#define S_IF_1(cond, result) OOP_IF(IS_OOP_END(cond))(ERASE_ARGS, S_IF_NEXT)(cond, result, 0)
+#define S_IF_NEXT(cond, result, next) OOP_IF(cond)(result S_ERASE_0, S_IF_##next)
 #define S_IF_(cond_seq) S_IF_0 cond_seq
 #define S_IF(cond_seq) OOP_IF(S_IS_EMPTY(cond_seq))(ERASE_ARGS, S_IF_)(cond_seq(OOP_END, OOP_END))
 

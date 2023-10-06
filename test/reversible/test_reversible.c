@@ -8,7 +8,7 @@ int FooBar_iter_(FooBar * fbable, FooBarIterator * fbator, char * start, char * 
     fbator->fb = fbable;
     fbator->pccur = start;
     fbator->pcstop = stop;
-    fbator->stop = ITERATOR_PAUSE;
+    fbator->stop_ = ITERATOR_PAUSE;
     
     return ITERATOR_GO;
 }
@@ -57,20 +57,21 @@ int FooBarIterator_iter(void * fbable, void * fbator) {
     }
 }
 
-void * FooBarIterator_next(void * fbator) {
+int FooBarIterator_next(void * fbator, void * el) {
     FooBarIterator * fbator_ = (FooBarIterator * ) fbator;
     char * out = fbator_->pccur;
-    if (out == fbator_->pcstop) {
-        fbator_->stop = ITERATOR_STOP;
+    if (fbator_->pccur == fbator_->pcstop) {
+        fbator_->stop_ = ITERATOR_STOP;
     } else {
-        fbator_->stop = ITERATOR_GO;
+        fbator_->stop_ = ITERATOR_GO;
         if (fbator_->pcstop > fbator_->pccur) {
             fbator_->pccur++;
         } else {
             fbator_->pccur--;
         }
     }
-    return (void *)out;
+    *((char *) el) = *out;
+    return 0;
 }
 
 int FooBarIterator_stop(void * fbator) {
@@ -78,7 +79,7 @@ int FooBarIterator_stop(void * fbator) {
         return ITERATOR_STOP;
     }
     
-    return ((FooBarIterator *)fbator)->stop;
+    return ((FooBarIterator *)fbator)->stop_;
 }
 
 int main() {
@@ -89,30 +90,39 @@ int main() {
 
     OOP_DECLARE(FooBarIterator, fbi);
     REVERSED(FooBar, &fb, &fbi);
-    char c = *(char *) NEXT(FooBarIterator, &fbi);
+    {
+    char c = '\0';
+    NEXT(FooBarIterator, &fbi, &c);
     while (STOP(FooBarIterator, &fbi) != ITERATOR_STOP) {
         printf("%c", c);
-        c = *(char *) NEXT(FooBarIterator, &fbi);
+        NEXT(FooBarIterator, &fbi, &c);
+    }
     }
 
     printf("\nTrying to iterate with FOR_EACH...\n");
 
+    {
     FOR_EACH(char, c, FooBar, &fb, FooBarIterator) {
-        printf("%c", *c);
+        printf("%c", c);
+    }
     }
 
     OOP_INTERFACE(FooBar, fb, Reversible).reverse(&fb);
     printf("\nTrying to iterate with FOR_EACH after reverse()...\n");
 
+    {
     FOR_EACH(char, c, FooBar, &fb, FooBarIterator) {
-        printf("%c", *c);
+        printf("%c", c);
+    }
     }
     
     OOP_INTERFACE(FooBar, fb, Reversible).reverse(&fb);
     printf("\nTrying to iterate with FOR_EACH after reverse() 2x...\n");
-
+    
+    {
     FOR_EACH(char, c, FooBar, &fb, FooBarIterator) {
-        printf("%c", *c);
+        printf("%c", c);
+    }
     }
 
     printf("\nSuccessful. Exiting...\n");

@@ -11,7 +11,7 @@ int FooBar_iter(void * fbable, void * fbator) {
     OOP_INIT(FooBarIterator, *fbr);
     fbr->fb = (FooBar *) fbable;
     fbr->pc = fbr->fb->str;
-    fbr->stop = ITERATOR_PAUSE;
+    fbr->stop_ = ITERATOR_PAUSE;
     if (fbr->pc == NULL) {
         return ITERATOR_FAIL;
     }
@@ -22,15 +22,16 @@ int FooBarIterator_iter(void * fbable, void * fbator) {
     return FooBar_iter(((FooBarIterator *) fbable)->fb, fbator);
 }
 
-void * FooBarIterator_next(void * fbator) {
+int FooBarIterator_next(void * fbator, void * pdest) {
     FooBarIterator * fbator_ = (FooBarIterator * ) fbator;
-    char * out = fbator_->pc++;;
-    if (*out == '\0') {
-        fbator_->stop = ITERATOR_STOP;
+    char * pdest_ = (char *) pdest;
+    *pdest_ = *(fbator_->pc++);
+    if (*pdest_ == '\0') {
+        fbator_->stop_ = ITERATOR_STOP;
     } else {
-        fbator_->stop = ITERATOR_GO;
+        fbator_->stop_ = ITERATOR_GO;
     }
-    return (void *)out;
+    return 0;
 }
 
 int FooBarIterator_stop(void * fbator) {
@@ -38,7 +39,7 @@ int FooBarIterator_stop(void * fbator) {
         return ITERATOR_STOP;
     }
     
-    return ((FooBarIterator *)fbator)->stop;
+    return ((FooBarIterator *)fbator)->stop_;
 }
 
 int main() {
@@ -49,16 +50,19 @@ int main() {
 
     OOP_DECLARE(FooBarIterator, fbi);
     ITER(FooBar, &fb, &fbi);
-    char c = *(char *) NEXT(FooBarIterator, &fbi);
+    {
+    char c = '\0';
+    NEXT(FooBarIterator, &fbi, &c);
     while (STOP(FooBarIterator, &fbi) != ITERATOR_STOP) {
         printf("%c\n", c);
-        c = *(char *) NEXT(FooBarIterator, &fbi);
+        NEXT(FooBarIterator, &fbi, &c);
     }
-
+    }
+    
     printf("\nTrying to iterate with FOR_EACH...\n");
 
     FOR_EACH(char, c, FooBar, &fb, FooBarIterator) {
-        printf("%c\n", *c);
+        printf("%c\n", c);
     }
 
     printf("Successful. Exiting...\n");

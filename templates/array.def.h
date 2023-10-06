@@ -17,6 +17,8 @@ INCLUDE <initializable.h>
 INCLUDE <sequence.h>
 INCLUDE <slice.h>
 
+DEFINE Array(el_type) Array##el_type
+
 DEFINE ARRAY_DEFAULT_FLAGS 0x00
 DEFINE ARRAY_MALLOC_ARRAY 0x01
 
@@ -26,6 +28,9 @@ DEFINE ARRAY_FAILURE 1
 /*
 add new declarations of arrays here
 */
-TEMPLATE_BASE(Array, void *)
+TYPEDEF(void *, pvoid)
+TEMPLATE(Array, pvoid)
+TEMPLATE(Array, double)
+TEMPLATE(Array, void)
 
 ENDIF // TEMPLATE_ARRAY_H

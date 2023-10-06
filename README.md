@@ -105,7 +105,7 @@ CLASS(array_double,
 )
 ```
 
-When members are shared, that generally means the base class should contain those members. When class members are shared, that generally means the interface should contain those members. And since we are templating away the type of the elements in the array, the type of the `arr` members needs to be templated, but where to put it? There are actually a few ways to do this in OOPC, but we'll go with the one that has a little more type safety (generics in C will always have some amount of type "un"-safety unless we are allowed to have C11 or never with `_Generic` selection). There is also a very efficient way to define the interface and class at the same time, but we will be a little more explicit here (and use fewer internal macros).
+When class members are shared, that generally means the interface should contain those members. And since we are templating away the type of the elements in the array, the type of the `arr` members needs to be templated, but where to put it? There are actually a few ways to do this in OOPC, but we'll go with the one that has a little more type safety (generics in C will always have some amount of type "un"-safety unless we are allowed to have C11 or newer with `_Generic` selection). There is also a very efficient way to define the interface and class at the same time, but we will be a little more explicit here (and use fewer internal macros).
 
 To indicate templating, we will use `##template_parameter` to indicate that template_parameter will be something our template has to handle. Our base class will look like
 
@@ -149,6 +149,8 @@ TEMPLATE_ARRAY(long)
 A few notes:
 - The way we templated the types with macro concatenation means the types themselves must be valid identifiers, which would restrict us to non-pointer types and built-in types that are single words. This can be worked-around with a simple typedef to unify multi-word types (ex. long long -> llong) and pointers (double * -> pdouble).
 - Since we are already putting `TEMPLATE_ARRAY()` in a .def.h file, which gets pre-processed 2x, we can actually have `TEMPLATE_ARRAY()` emit macros that include the templated implementations of the interface functions! This reduces the implementation of each array type to as little as a single (albet borderline unreadable) line...but that's some macro trickery that won't be expounded on here.
+
+For the full implementation of the template for Array() objects, see \oopc\templates\t_array.def.h for the templates. Declarations and implementations are in \oopc\templates\array.def.h & array.c
 
 </blockquote></details>
 

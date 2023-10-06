@@ -15,11 +15,11 @@ DEFINE IS_NEG(x) (!((x) > 0) && ((x) != 0))
 DEFINE CYCLE_TO_POS(x, size) (IS_NEG(x) ? size - (-x) : x)
 
 // accepts negative indices
-DEFINE GET(SequenceType, pseq, index) OOPC(INTERFACE)(SequenceType, *pseq, Sequence).get(pseq, CYCLE_TO_POS(index, OOPC(INTERFACE)(SequenceType, *pseq, Sized).len(pseq)))
+DEFINE GET(SequenceType, pseq, index) OOPC(GET)(SequenceType, *pseq, get)(pseq, CYCLE_TO_POS(index, OOPC(INTERFACE)(SequenceType, *pseq, Sized).len(pseq)))
 
 // Sequence interface
 CLASS(Sequence,
-    FUNCTION(NULL, void *, get, void *, size_t)
+    FUNCTION(NULL, int, get, void *, size_t, void *)
     EXTENDS(Collection)
     EXTENDS(Reversible)
 )
@@ -33,9 +33,9 @@ CLASS(MutableSequence,
     FUNCTION(NULL, int, push, void *, void *)
     FUNCTION(NULL, int, insert, void *, void *, size_t)
     FUNCTION(NULL, int, extend, void *, void *)
-    FUNCTION(NULL, void *, peek, void *)
-    FUNCTION(NULL, void *, pop, void *)
-    FUNCTION(NULL, void *, remove, void *, size_t)
+    FUNCTION(NULL, int, peek, void *, void *)
+    FUNCTION(NULL, int, pop, void *, void *)
+    FUNCTION(NULL, int, remove, void *, size_t, void *)
     EXTENDS(Sequence)
 )
 

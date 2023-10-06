@@ -7,13 +7,14 @@ current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 BASE_NAME = array
 
 PRE_CFLAGS = -E -P
-PRE_IFLAGS = -I../../include/ -I../../templates -I. 
+PRE_IFLAGS = -I../../include/ -I../../templates/ -I. 
 PRE_BASE_DIR = ./
 
 CLEAN_SCRIPT = 
+CLEAN_SCRIPT2 = 
 
 CFLAGS = -Wall -pedantic -Wno-missing-braces -Wno-unused-variable -std=c99
-IFLAGS = -I../../include/ -I../../templates -I. 
+IFLAGS = -I../../include/ -I../../templates/ -I. 
 LFLAGS = 
 
 EXT = 
@@ -24,6 +25,7 @@ ifeq ($(UNAME), Linux)
 	# STILL NEED TO MAKE A LINUX SCRIPT
 else
 	CLEAN_SCRIPT += ..\..\scripts\rep_nl_tab_win.bat
+	CLEAN_SCRIPT2 += ..\..\scripts\rep_nl_tab.exe
 	EXT = .exe
 	DEL_FILE = del /f
 endif
@@ -39,13 +41,14 @@ build_slice: pp_slice
 	$(CLEAN_SCRIPT) $(current_dir)/slice.h
 
 build_array_c:
-	$(CC) $(CFLAGS) $(IFLAGS) -c ../../templates/array.c -o $(current_dir)/array.o
+	
+#$(CC) $(PRE_CFLAGS) $(PRE_IFLAGS) ../../templates/array.c -o $(current_dir)/array.txt.c
 
 pp_array:
 	$(CC) $(PRE_CFLAGS) $(PRE_IFLAGS) ../../templates/array.def.h -o $(current_dir)/array.h
 
 build_array: pp_array
-	$(CLEAN_SCRIPT) $(current_dir)/array.h
+	$(CLEAN_SCRIPT2) $(current_dir)/array.h
 
 pp_sequence:
 	$(CC) $(PRE_CFLAGS) $(PRE_IFLAGS) ../../interfaces/sequence.def.h -o $(current_dir)/sequence.h
@@ -102,8 +105,7 @@ build_foobar: pp_foobar
 	$(CLEAN_SCRIPT) $(current_dir)/foobar.h
 
 build_test: build_classes
-		
-#$(CC) $(CFLAGS) $(IFLAGS) $(BASE_NAME).c -o $(BASE_NAME)$(EXT)
+	$(CC) $(CFLAGS) $(IFLAGS) ../../templates/array.c ../../objects/slice.c $(BASE_NAME).c -o $(BASE_NAME)$(EXT) 2> log.txt
 
 clean:
-	$(DEL_FILE) foobar.h collection.h sized.h container.h creatable.h initializable.h iteration.h reversible.h sequence.h array.h
+	$(DEL_FILE) foobar.h collection.h sized.h container.h creatable.h initializable.h iteration.h reversible.h sequence.h array.h log.txt slice.h
