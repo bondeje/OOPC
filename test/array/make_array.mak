@@ -11,7 +11,6 @@ PRE_IFLAGS = -I../../include/ -I../../templates/ -I.
 PRE_BASE_DIR = ./
 
 CLEAN_SCRIPT = 
-CLEAN_SCRIPT2 = 
 
 CFLAGS = -Wall -pedantic -Wno-missing-braces -Wno-unused-variable -std=c99
 IFLAGS = -I../../include/ -I../../templates/ -I. 
@@ -24,8 +23,7 @@ DEL_FILE =
 ifeq ($(UNAME), Linux)
 	# STILL NEED TO MAKE A LINUX SCRIPT
 else
-	CLEAN_SCRIPT += ..\..\scripts\rep_nl_tab_win.bat
-	CLEAN_SCRIPT2 += ..\..\scripts\rep_nl_tab.exe
+	CLEAN_SCRIPT += ..\..\scripts\rep_nl_tab.exe
 	EXT = .exe
 	DEL_FILE = del /f
 endif
@@ -48,7 +46,7 @@ pp_array:
 	$(CC) $(PRE_CFLAGS) $(PRE_IFLAGS) ../../templates/array.def.h -o $(current_dir)/array.h
 
 build_array: pp_array
-	$(CLEAN_SCRIPT2) $(current_dir)/array.h
+	$(CLEAN_SCRIPT) $(current_dir)/array.h
 
 pp_sequence:
 	$(CC) $(PRE_CFLAGS) $(PRE_IFLAGS) ../../interfaces/sequence.def.h -o $(current_dir)/sequence.h

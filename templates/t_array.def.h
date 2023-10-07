@@ -17,9 +17,9 @@
 #define TEMPLATE_Array_(name, el_type) \
 TYPEDEF(struct name, name) OOP_NEWLINE \
 TYPEDEF(struct name##Iterator, name##Iterator) OOP_NEWLINE \
-void name##_init_(name *, el_type *, size_t, size_t, unsigned int, size_t);  OOP_NEWLINE \
+void name##_init_(name *, el_type *, size_t, unsigned int, size_t);  OOP_NEWLINE \
 int name##_init(void *, unsigned int, ...); OOP_NEWLINE \
-name * name##_new_(el_type *, size_t, size_t, unsigned int, size_t);  OOP_NEWLINE \
+name * name##_new_(el_type *, size_t, unsigned int, size_t);  OOP_NEWLINE \
 void * name##_new(unsigned int, ...);  OOP_NEWLINE \
 int name##_del(void *);  OOP_NEWLINE \
 int name##_get(OOP_IF(OOP_OR(EQUAL(el_type, void), EQUAL(el_type, pvoid)))(void, name) *, size_t, OOP_IF(OOP_OR(EQUAL(el_type, void), EQUAL(el_type, pvoid)))(void, el_type) *);  OOP_NEWLINE \
@@ -36,7 +36,6 @@ OOP_NEWLINE \
 OOP_NEWLINE \
 CLASS(name, \
     MEMBER(el_type *, arr) \
-    MEMBER(size_t, cap) \
     MEMBER(size_t, size) \
     OOP_IF(EQUAL(el_type, void))(MEMBER(size_t, el_size), ) \
     MEMBER(unsigned int, reversed) \
@@ -57,9 +56,8 @@ CLASS(name##Iterator, \
 
 #define TEMPLATE_IMPLEMENTATION_Array(el_type) TEMPLATE_IMPLEMENTATION_Array_(Array##el_type, el_type)
 #define TEMPLATE_IMPLEMENTATION_Array_(name, el_type) \
-void name##_init_(name * iable, el_type * arr, size_t cap, size_t size, unsigned int flags, size_t el_size) { \
+void name##_init_(name * iable, el_type * arr, size_t size, unsigned int flags, size_t el_size) { \
     iable->arr = arr; \
-    iable->cap = cap; \
     iable->size = size; \
     iable->reversed = 0; \
     iable->flags = flags; \
@@ -70,30 +68,26 @@ int name##_init(void * iable, unsigned int n, ...) { \
         va_list args; \
         va_start(args, n); \
         el_type * arr = va_arg(args, el_type *); \
-        size_t cap = va_arg(args, size_t); \
-        size_t size = 0; \
+        size_t size = va_arg(args, size_t); \
         size_t el_size = OOP_IF(EQUAL(el_type, void))(0, sizeof(el_type)); \
         unsigned int flags = ARRAY_DEFAULT_FLAGS; \
         if (n > 2) { \
-            size = va_arg(args, size_t); \
-        } \
-        if (n > 3) { \
             flags = va_arg(args, unsigned int); \
         } \
-        OOP_IF(EQUAL(el_type, void))(if (n > 4) {el_size = va_arg(args, size_t); }, ) \
+        OOP_IF(EQUAL(el_type, void))(if (n > 3) {el_size = va_arg(args, size_t); }, ) \
         va_end(args); \
-        name##_init_(iable, arr, cap, size, flags, el_size); \
+        name##_init_(iable, arr, size, flags, el_size); \
         return ARRAY_SUCCESS; \
     } \
     return ARRAY_FAILURE; \
 } \
-name * name##_new_(el_type * arr, size_t init_cap, size_t size, unsigned int flags, size_t el_size) { \
+name * name##_new_(el_type * arr, size_t size, unsigned int flags, size_t el_size) { \
     name * st = (name *) malloc(sizeof(name)); \
     if (!st) { \
         return NULL; \
     } \
     if (!arr) { \
-        el_type * arr = (el_type *) malloc(el_size * init_cap); \
+        el_type * arr = (el_type *) calloc(size, el_size ); \
         if (!arr) { \
             free(st); \
             return NULL; \
@@ -103,7 +97,7 @@ name * name##_new_(el_type * arr, size_t init_cap, size_t size, unsigned int fla
         flags &= ~ARRAY_MALLOC_ARRAY; \
     } \
     OOP_INIT(name, *st); \
-    name##_init_(st, arr, init_cap, size, flags, el_size); \
+    name##_init_(st, arr, size, flags, el_size); \
     return st; \
 } \
 void * name##_new(unsigned int n, ...) { \
@@ -111,27 +105,22 @@ void * name##_new(unsigned int n, ...) { \
         va_list args; \
         va_start(args, n); \
         el_type * arr = NULL; \
-        size_t init_cap = 0; \
         size_t size = 0; \
         size_t el_size = OOP_IF(EQUAL(el_type, void))(0, sizeof(el_type)); \
         unsigned int flags = ARRAY_DEFAULT_FLAGS; \
         if (n == 1) { \
-            init_cap = va_arg(args, size_t); \
+            size = va_arg(args, size_t); \
             flags |= ARRAY_MALLOC_ARRAY; \
         } else { \
             arr = va_arg(args, el_type *); \
-            init_cap = va_arg(args, size_t); \
-        } \
-        if (n > 2) { \
             size = va_arg(args, size_t); \
         } \
-        if (n > 3) { \
+        if (n > 2) { \
             flags = va_arg(args, unsigned int); \
         } \
-        OOP_IF(EQUAL(el_type, void))(if (n > 4) {el_size = va_arg(args, size_t); }, ) \
+        OOP_IF(EQUAL(el_type, void))(if (n > 3) {el_size = va_arg(args, size_t); }, ) \
         va_end(args); \
-        name##_new_(arr, init_cap, size, flags, el_size); \
-        return ARRAY_SUCCESS; \
+        return (void *) name##_new_(arr, size, flags, el_size); \
     } \
     return NULL; \
 } \
