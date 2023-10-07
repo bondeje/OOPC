@@ -106,4 +106,4 @@ build_test: build_classes
 	$(CC) $(CFLAGS) $(IFLAGS) ../../templates/array.c ../../objects/slice.c $(BASE_NAME).c -o $(BASE_NAME)$(EXT) 2> log.txt
 
 clean:
-	$(DEL_FILE) foobar.h collection.h sized.h container.h creatable.h initializable.h iteration.h reversible.h sequence.h array.h log.txt slice.h
+	$(DEL_FILE) foobar.h collection.h sized.h container.h creatable.h initializable.h iteration.h reversible.h sequence.h array.h slice.h log.txt

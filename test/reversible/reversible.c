@@ -7,9 +7,7 @@ int FooBar_iter_(FooBar * fbable, FooBarIterator * fbator, char * start, char * 
     OOP_INIT(FooBarIterator, *fbator);
     fbator->fb = fbable;
     fbator->pccur = start;
-    fbator->pcstop = stop;
-    fbator->stop_ = ITERATOR_PAUSE;
-    
+    fbator->pcstop = stop;    
     return ITERATOR_GO;
 }
 
@@ -59,27 +57,17 @@ int FooBarIterator_iter(void * fbable, void * fbator) {
 
 int FooBarIterator_next(void * fbator, void * el) {
     FooBarIterator * fbator_ = (FooBarIterator * ) fbator;
-    char * out = fbator_->pccur;
     if (fbator_->pccur == fbator_->pcstop) {
-        fbator_->stop_ = ITERATOR_STOP;
-    } else {
-        fbator_->stop_ = ITERATOR_GO;
-        if (fbator_->pcstop > fbator_->pccur) {
-            fbator_->pccur++;
-        } else {
-            fbator_->pccur--;
-        }
-    }
-    *((char *) el) = *out;
-    return 0;
-}
-
-int FooBarIterator_stop(void * fbator) {
-    if (!fbator) {
         return ITERATOR_STOP;
     }
-    
-    return ((FooBarIterator *)fbator)->stop_;
+    char * out = fbator_->pccur;
+    if (fbator_->pcstop > fbator_->pccur) {
+        fbator_->pccur++;
+    } else {
+        fbator_->pccur--;
+    }
+    *((char *) el) = *out;
+    return ITERATOR_GO;
 }
 
 int main() {
@@ -92,10 +80,8 @@ int main() {
     REVERSED(FooBar, &fb, &fbi);
     {
     char c = '\0';
-    NEXT(FooBarIterator, &fbi, &c);
-    while (STOP(FooBarIterator, &fbi) != ITERATOR_STOP) {
+    while (!NEXT(FooBarIterator, &fbi, &c)) {
         printf("%c", c);
-        NEXT(FooBarIterator, &fbi, &c);
     }
     }
 

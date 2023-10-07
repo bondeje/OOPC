@@ -10,7 +10,6 @@ INCLUDE_OOPC
 TYPEDEF(struct Slice, Slice)
 TYPEDEF(struct SliceIterator, SliceIterator)
 int SliceIterator_iter(void *, void *);
-int SliceIterator_stop(void *);
 int SliceIterator_next(void *, void *);
 
 // some of these would belong in a utility setup or just push to oopc.h. Some are also defined in sequence.h
@@ -24,14 +23,14 @@ DEFINE MAKE_SLICE_1(len) MAKE_SLICE_4(0, len, 1, len)
 DEFINE MAKE_SLICE_2(start, len) MAKE_SLICE_4(start, len, 1, len)
 DEFINE MAKE_SLICE_3(start, stop, len) MAKE_SLICE_4(start, stop, (stop >= start ? 1 : -1), len)
 DEFINE MAKE_SLICE_4__(start_, stop__, step_, len) {.class__ = &TYPE_NAME(CLASS_MANGLE(Slice)), .start = start_, .stop_ = stop__, .step = step_}
-DEFINE MAKE_SLICE_4_(start_, stop_, step_, len) MAKE_SLICE_4__(start_ + (stop_ >= start_ && step_ > 0 ? 0 : 1), stop_, step_, len)
+DEFINE MAKE_SLICE_4_(start_, stop_, step_, len) MAKE_SLICE_4__(start_ + (stop_ >= start_ && step_ > 0 ? 0 : 1), stop_ + (stop_ >= start_ && step_ > 0 ? 0 : 1), step_, len)
 DEFINE MAKE_SLICE_4(start_, stop_, step_, len) MAKE_SLICE_4_(MINIMUM2(len, CYCLE_TO_POS(start_, len)), MINIMUM2(len, CYCLE_TO_POS(stop_, len)), step_, len)
 DEFINE MAKE_SLICE(...) SPLIT(CAT)(MAKE_SLICE, SPLIT(VARIADIC_SIZE)(__VA_ARGS__))(__VA_ARGS__)
 
 DEFINE MAKE_SLICE_ITERATOR_1(len) MAKE_SLICE_ITERATOR_4(0, len, 1, len)
 DEFINE MAKE_SLICE_ITERATOR_2(start, len) MAKE_SLICE_ITERATOR_4(start, len, 1, len)
 DEFINE MAKE_SLICE_ITERATOR_3(start, stop, len) MAKE_SLICE_ITERATOR_4(start, stop, (stop >= start ? 1 : -1), len)
-DEFINE MAKE_SLICE_ITERATOR_4__(start_, stop__, step_, len) (SliceIterator) {.class__ = &TYPE_NAME(CLASS_MANGLE(SliceIterator)), .sl = MAKE_SLICE_4__(start_, stop__, step_, len), .loc = start_, .stop_ = ITERATOR_PAUSE}
+DEFINE MAKE_SLICE_ITERATOR_4__(start_, stop__, step_, len) (SliceIterator) {.class__ = &TYPE_NAME(CLASS_MANGLE(SliceIterator)), .sl = MAKE_SLICE_4__(start_, stop__, step_, len), .loc = start_}
 DEFINE MAKE_SLICE_ITERATOR_4_(start_, stop_, step_, len) MAKE_SLICE_ITERATOR_4__(start_ + (stop_ >= start_ && step_ > 0 ? 0 : 1), stop_, step_, len)
 DEFINE MAKE_SLICE_ITERATOR_4(start_, stop_, step_, len) MAKE_SLICE_ITERATOR_4_(MINIMUM2(len, CYCLE_TO_POS(start_, len)), MINIMUM2(len, CYCLE_TO_POS(stop_, len)), step_, len)
 DEFINE MAKE_SLICE_ITERATOR(...) SPLIT(CAT)(MAKE_SLICE_ITERATOR, SPLIT(VARIADIC_SIZE)(__VA_ARGS__))(__VA_ARGS__)
@@ -48,6 +47,5 @@ CLASS(Slice,
 CLASS(SliceIterator,
     MEMBER(Slice, sl)
     MEMBER(size_t, loc)
-    MEMBER(int, stop_)
-    IMPLEMENTS(Iterator, iter, SliceIterator_iter, next, SliceIterator_next, stop, SliceIterator_stop)
+    IMPLEMENTS(Iterator, iter, SliceIterator_iter, next, SliceIterator_next)
 )

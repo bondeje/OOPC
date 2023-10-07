@@ -27,7 +27,6 @@ bool name##_contains(OOP_IF(OOP_OR(EQUAL(el_type, void), EQUAL(el_type, pvoid)))
 int name##_iter(void *, void *); OOP_NEWLINE \
 int name##Iterator_iter(void *, void *); OOP_NEWLINE \
 int name##Iterator_next(OOP_IF(OOP_OR(EQUAL(el_type, void), EQUAL(el_type, pvoid)))(void, name##Iterator) *, OOP_IF(OOP_OR(EQUAL(el_type, void), EQUAL(el_type, pvoid)))(void, el_type) *); OOP_NEWLINE \
-int name##Iterator_stop(void *); OOP_NEWLINE \
 size_t name##_len(void *); OOP_NEWLINE \
 bool name##_is_empty(void *); OOP_NEWLINE \
 int name##_reverse(void *); OOP_NEWLINE \
@@ -51,7 +50,7 @@ CLASS(name##Iterator, \
     MEMBER(name *, iable) \
     MEMBER(SliceIterator, isl) \
     OOP_IF(OOP_OR(EQUAL(el_type, void), EQUAL(el_type, pvoid)))( , CLASS_FUNCTION(name##Iterator_next, int, next, name##Iterator *, el_type *)) \
-    IMPLEMENTS(Iterator, iter, name##Iterator_iter, next, OOP_IF(OOP_OR(EQUAL(el_type, void), EQUAL(el_type, pvoid)))(name##Iterator_next, NULL), stop, name##Iterator_stop) \
+    IMPLEMENTS(Iterator, iter, name##Iterator_iter, next, OOP_IF(OOP_OR(EQUAL(el_type, void), EQUAL(el_type, pvoid)))(name##Iterator_next, NULL)) \
 )
 
 #define TEMPLATE_IMPLEMENTATION_Array(el_type) TEMPLATE_IMPLEMENTATION_Array_(Array##el_type, el_type)
@@ -139,7 +138,7 @@ int name##_del(void * st_) { \
 int name##_get(OOP_IF(OOP_OR(EQUAL(el_type, void), EQUAL(el_type, pvoid)))(void, name) * st_, size_t index, OOP_IF(OOP_OR(EQUAL(el_type, void), EQUAL(el_type, pvoid)))(void, el_type) * el) { \
     name * st = (name *) st_; \
     if (!st || index >= st->size) { \
-        return 1; \
+        return ARRAY_FAILURE; \
     } \
     if (st->reversed) { \
         index = name##_len(st_) - index - 1; \
@@ -157,53 +156,50 @@ int name##_get(OOP_IF(OOP_OR(EQUAL(el_type, void), EQUAL(el_type, pvoid)))(void,
     , \
         *((el_type *)el) = st->arr[index]; \
     ) \
-    return 0; \
+    return ARRAY_SUCCESS; \
 } \
 size_t name##_len(void * st_) { \
     return ((name *)st_)->size; \
 } \
 int name##_iter(void * st_, void * ist_) { \
     if (!st_ || !ist_) { \
-        return 1; \
+        return ITERATOR_FAIL; \
     } \
     name##Iterator * ist = (name##Iterator *) ist_; \
     OOP_INIT(name##Iterator, *ist); \
     size_t size = name##_len(st_); \
     ist->isl = MAKE_SLICE_ITERATOR(0, size, 1, size); \
     ist->iable = st_; \
-    return 0; \
+    return ITERATOR_GO; \
 } \
 int name##Iterator_iter(void * ist_src, void * ist_dest) { \
     return name##_iter(((name##Iterator *) ist_src)->iable, ist_dest); \
 } \
 int name##Iterator_next(OOP_IF(OOP_OR(EQUAL(el_type, void), EQUAL(el_type, pvoid)))(void, name##Iterator) * ist_, OOP_IF(OOP_OR(EQUAL(el_type, void), EQUAL(el_type, pvoid)))(void, el_type) * el) { \
     name##Iterator * ist = (name##Iterator *) ist_; \
-    size_t pindex = 0; \
-    if (SliceIterator_next(&ist->isl, &pindex)) { \
-        return 1; \
+    size_t index = 0; \
+    if (SliceIterator_next(&ist->isl, &index)) { \
+        return ITERATOR_STOP; \
     } \
-    return name##_get(ist->iable, pindex, el); \
-} \
-int name##Iterator_stop(void * ist_) { \
-    return SliceIterator_stop(&(((name##Iterator *) ist_)->isl)); \
+    return (name##_get(ist->iable, index, el) ? ITERATOR_FAIL : ITERATOR_GO); \
 } \
 int name##_reversed(void * st_, void * ist_) { \
     if (!st_ || !ist_) { \
-        return 1; \
+        return ITERATOR_FAIL; \
     } \
     name##Iterator * ist = (name##Iterator *) ist_; \
     OOP_INIT(name##Iterator, *ist); \
     size_t size = name##_len(st_); \
     ist->isl = MAKE_SLICE_ITERATOR(size-1, -1, -1, size); \
     ist->iable = st_; \
-    return 0; \
+    return ITERATOR_GO; \
 } \
 int name##_reverse(void * st_) { \
     if (!st_) { \
-        return 1; \
+        return ARRAY_FAILURE; \
     } \
     ((name *)st_)->reversed = !((name *)st_)->reversed; \
-    return 0; \
+    return ARRAY_SUCCESS; \
 } \
 bool name##_contains(OOP_IF(OOP_OR(EQUAL(el_type, void), EQUAL(el_type, pvoid)))(void, name) * st_, OOP_IF(EQUAL(el_type, void))(void *, el_type) search_el) { \
     FOR_EACH(OOP_IF(EQUAL(el_type, void))(unsigned char *, el_type), el, name, ((name *) st_), name##Iterator) { \
@@ -230,5 +226,5 @@ bool name##_contains(OOP_IF(OOP_OR(EQUAL(el_type, void), EQUAL(el_type, pvoid)))
     return false; \
 } \
 bool name##_is_empty(void * st_) { \
-    return name##_len(st_) == 0; \
+    return !name##_len(st_); \
 }

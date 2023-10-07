@@ -19,7 +19,6 @@ INCLUDE_OOPC
 int FooBar_iter(void *, void *);
 int FooBarIterator_iter(void *, void *);
 int FooBarIterator_next(void *, void *);
-int FooBarIterator_stop(void *);
 
 // container.h
 bool FooBar_contains(void *, void *);
@@ -43,13 +42,10 @@ CLASS(FooBar,
     IMPLEMENTS(Sized, len, FooBar_len)
 )
 
-//IMPLEMENTS(Container, contains, FooBar_contains, new, FooBar_new, del, FooBar_del, init, FooBar_init)
-
 CLASS(FooBarIterator,
     MEMBER(FooBar *, fb)
     MEMBER(char *, pc)
-    MEMBER(enum iterator_status, stop_)
-    IMPLEMENTS(Iterator, next, FooBarIterator_next, stop, FooBarIterator_stop, iter, FooBarIterator_iter)
+    IMPLEMENTS(Iterator, next, FooBarIterator_next, iter, FooBarIterator_iter)
 )
 
 ENDIF
