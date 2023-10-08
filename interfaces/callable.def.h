@@ -10,7 +10,9 @@ INCLUDE_OOPC
  * \typedef call function typedef
  */
 IFNDEF OMIT_STRUCT_DECLS
+IFNDEF IMPORT_CLASS_DEFS_ONLY
 typedef int (*call_t)(void *, ...);
+ENDIF
 ENDIF
 
 DEFINE CALL(type, pinst, ...) SPLIT(OOP_INTERFACE)(type, *pinst, Callable).call(pinst, CATD(__VA, ARGS__, _))
@@ -38,7 +40,9 @@ ENDIF // CALLABLE_H
 
 // IMPORT_MAKE_CALLABLE_H defined
 #else
+IFNDEF IMPORT_CLASS_DEFS_ONLY
 INCLUDE <stdarg.h>
+ENDIF
 
 #define GET_CALLABLE(type, func) Callable_##type##_##func
 
@@ -74,12 +78,16 @@ INCLUDE <stdarg.h>
  * "..." are the other arguments. Currently, 'func' MUST take type * as its first argument.
  */
 #define DECLARE_CALLABLE(type, ret, func, ...) \
+IFNDEF IMPORT_CLASS_DEFS_ONLY \
+OOP_NEWLINE \
 int GET_CALLABLE(type, func)(void *, ...); OOP_NEWLINE \
 OOP_IF(EQUAL(ret, void))( \
     int CAT(v, GET_CALLABLE(type, func))(type *, va_list); \
     , \
     int CAT(v, GET_CALLABLE(type, func))(type *, va_list); \
 ) OOP_NEWLINE \
+ENDIF /* IMPORT_CLASS_DEFS_ONLY */ \
+OOP_NEWLINE \
 DEFINE CAT(IMPLEMENT_, GET_CALLABLE(type, func)) \
 int SPLIT(GET_CALLABLE)(type, func)(void * t_, ...) { \
     va_list args; \

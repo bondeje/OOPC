@@ -35,6 +35,7 @@
 #define LPAREN() (
 #define RPAREN() )
 // only works if x does not start with a set of '()'. Worse if x is a sequence of (...)x for any x, results in '1'
+// HUGE GAPING HOLE! because of the above, if x == NULL, this will crash because it return 1(). When (commonly) used with OOP_IF...this will cause OOP_IF_1 to be called
 #define IS_PAREN(x) T_INSPECT_1(IS_PAREN_ x, 0)
 #define IS_PAREN_(x) CATC(x, 1) 
 

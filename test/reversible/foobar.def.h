@@ -2,9 +2,10 @@
 
 IFNDEF FOOBAR_H
 DEFINE FOOBAR_H
-#define OMIT_STRUCT_DECLS
+#define IMPORT_CLASS_DEFS_ONLY
 #include <reversible.h>
-#undef OMIT_STRUCT_DECLS
+#undef IMPORT_CLASS_DEFS_ONLY
+IFNDEF IMPORT_CLASS_DEFS_ONLY
 INCLUDE <reversible.h>
 INCLUDE_OOPC
 
@@ -13,6 +14,8 @@ int FooBarIterator_iter(void *, void *);
 int FooBarIterator_next(void *, void *);
 int FooBar_reverse(void *);
 int FooBar_reversed(void *, void *);
+
+ENDIF /* IMPORT_CLASS_DEFS_ONLY */
 
 CLASS(FooBar,
     MEMBER(char *, str)

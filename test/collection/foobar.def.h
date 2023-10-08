@@ -2,17 +2,16 @@
 
 IFNDEF FOOBAR_H
 DEFINE FOOBAR_H
-#define OMIT_STRUCT_DECLS
+#define IMPORT_CLASS_DEFS_ONLY
 #include <iteration.h>
 #include <container.h>
 #include <sized.h>
-#undef OMIT_STRUCT_DECLS
+#undef IMPORT_CLASS_DEFS_ONLY
+IFNDEF IMPORT_CLASS_DEFS_ONLY
 INCLUDE <iteration.h>
 INCLUDE <container.h>
 INCLUDE <sized.h>
-IFNDEF OMIT_STRUCT_DECLS
 INCLUDE <stddef.h>
-ENDIF
 INCLUDE_OOPC
 
 // iteration.h
@@ -34,6 +33,8 @@ size_t FooBar_len(void *);
 static inline bool FooBar_is_empty(void * st_) {
     return FooBar_len(st_) == 0;
 }
+
+ENDIF /* IMPORT_CLASS_DEFS_ONLY */
 
 CLASS(FooBar,
     MEMBER(char *, str)

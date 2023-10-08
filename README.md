@@ -84,8 +84,10 @@ So how do we create class templates to accommodate all our potential arrays? Wel
 
 ```
 // compare elements of an int array of size n at indices i and j
+IFNDEF IMPORT_CLASS_DEFS_ONLY
 int array_int_compare(array_int * iarr, size_t i, size_t j);
 size_t array_int_size(array_int * iarr);
+ENDIF /* IMPORT_CLASS_DEFS_ONLY */
 CLASS(array_int,
     MEMBER(size_t, capacity)
     MEMBER(size_t, size)
@@ -94,8 +96,10 @@ CLASS(array_int,
     CLASS_FUNCTION(array_int_size, size_t, size, array_int *)
 )
 
+IFNDEF IMPORT_CLASS_DEFS_ONLY
 int array_double_compare(array_double * darr, size_t i, size_t j);
 size_t array_double_size(array_double * darr);
+ENDIF /* IMPORT_CLASS_DEFS_ONLY */
 CLASS(array_double,
     MEMBER(size_t, capacity)
     MEMBER(size_t, size)
@@ -128,9 +132,13 @@ Then our template will look like the following
 
 ```
 #define TEMPLATE_ARRAY(type) \
+IFNDEF IMPORT_CLASS_DEFS_ONLY \
+OOP_NEWLINE \
 TYPEDEF(struct array_##type, array_##type) \
 int array_##type##_compare(void * arr, size_t i, size_t j); \
 size_t array_##type##_size(void * arr); \
+ENDIF /* IMPORT_CLASS_DEFS_ONLY */ \
+OOP_NEWLINE \
 CLASS(array_##type, \
     EXTENDS(array) \
     MEMBER(type *, arr) \
@@ -149,6 +157,7 @@ TEMPLATE_ARRAY(long)
 A few notes:
 - The way we templated the types with macro concatenation means the types themselves must be valid identifiers, which would restrict us to non-pointer types and built-in types that are single words. This can be worked-around with a simple typedef to unify multi-word types (ex. long long -> llong) and pointers (double * -> pdouble).
 - Since we are already putting `TEMPLATE_ARRAY()` in a .def.h file, which gets pre-processed 2x, we can actually have `TEMPLATE_ARRAY()` emit macros that include the templated implementations of the interface functions! This reduces the implementation of each array type to as little as a single (albet borderline unreadable) line...but that's some macro trickery that won't be expounded on here.
+- You will notice that I had to wrap the lines before `CLASS` with an emitted `IFNDEF IMPORT_CLASS_DEFS_ONLY` directive. There are lots of use cases where a template or interface needs access to a header file for another OOPC-defined class. If the latter has `typedefs` or any other definitions either in the header file itself or especially if it imports any standard c headers, the import guards will not be present in the headers preprocessed with OOPC and so will include duplicate definitions. GCC will through many alarms for this. This guard makes it so that our resulting header with template realizations only uses the emitted class definitions to construct dependent class definitions
 
 For the full implementation of the template for Array() objects, see \oopc\templates\t_array.def.h for the templates. Declarations and implementations are in \oopc\templates\array.def.h & array.c
 
@@ -211,6 +220,7 @@ Build a struct to represent a `char` buffer with max width 1024 including the `\
 // defs.h converted to buffer.h
 #include <oopc.h>
 INCLUDE_OOP
+IFNDEF IMPORT_CLASS_DEFS_ONLY
 INCLUDE <stdio.h>
 INCLUDE <string.h>
 DEFINE MAX_BUFFER_LENGTH 1024
@@ -218,6 +228,7 @@ TYPEDEF(struct buffer, buffer)
 void buffer_init(buffer * b, char * c_str);
 int buffer_print(buffer * b);
 int buffer_append(buffer * b, buffer * to_append);
+ENDIF /* IMPORT_CLASS_DEFS_ONLY */ 
 CLASS(buffer, 
     MEMBER(int, size)
     ARRAY_MEMBER(char, buf, MAX_BUFFER_LENGTH)

@@ -4,7 +4,6 @@ DEFINE REVERSIBLE_H
 
 INCLUDE <iteration.h>
 
-
 // TODO: emit macro REVERSED that takes an 
 DEFINE REVERSED(ReversibleType, pinst, preversible) OOPC(INTERFACE)(ReversibleType, *pinst, Reversible).reversed(pinst, preversible)
 

@@ -1,10 +1,12 @@
 #include <oopc.h>
-#define OMIT_STRUCT_DECLS
+#define IMPORT_CLASS_DEFS_ONLY
 #include <container.h>
-#undef OMIT_STRUCT_DECLS
+#undef IMPORT_CLASS_DEFS_ONLY
+IFNDEF IMPORT_CLASS_DEFS_ONLY
 INCLUDE <container.h>
 INCLUDE <stdbool.h>
 INCLUDE_OOPC
+ENDIF
 
 bool FooBar_contains(void *, void *);
 bool FooBar_is_empty(void *);

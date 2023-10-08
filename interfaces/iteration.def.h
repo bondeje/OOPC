@@ -3,12 +3,7 @@ IFNDEF ITERATION_H
 DEFINE ITERATION_H
 INCLUDE_OOPC
 
-/*
-because  .next now gives a failure, can use that to completely replace .stop and STOP. FOR_EACH would simply have the form:
-    for ( ; NEXT(IteratorType, pinst, pdest) ; )
-*/
-
-IFNDEF OMIT_STRUCT_DECLS
+IFNDEF IMPORT_CLASS_DEFS_ONLY
 enum iterator_status {
     ITERATOR_FAIL = -1,
     ITERATOR_GO,

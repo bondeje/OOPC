@@ -6,15 +6,13 @@
  * macros must escape <oopc.h> macros
  */
 
-# ifndef OOP_MEMBER_void 
-    # define OOP_MEMBER_void( x ) x 
-#endif 
-#ifndef OOP_MEMBER_pvoid 
- 	# define OOP_MEMBER_pvoid( x ) x 
-#endif 
+#define Array(el_type) Array##el_type
+#define ArrayIterator(el_type) Array##el_type##Iterator
 
 #define TEMPLATE_Array(el_type) TEMPLATE_Array_(Array##el_type, el_type)
 #define TEMPLATE_Array_(name, el_type) \
+IFNDEF IMPORT_CLASS_DEFS_ONLY \
+OOP_NEWLINE \
 TYPEDEF(struct name, name) OOP_NEWLINE \
 TYPEDEF(struct name##Iterator, name##Iterator) OOP_NEWLINE \
 void name##_init_(name *, el_type *, size_t, unsigned int, size_t);  OOP_NEWLINE \
@@ -31,6 +29,7 @@ size_t name##_len(void *); OOP_NEWLINE \
 bool name##_is_empty(void *); OOP_NEWLINE \
 int name##_reverse(void *); OOP_NEWLINE \
 int name##_reversed(void *, void *); OOP_NEWLINE \
+ENDIF /* IMPORT_CLASS_DEFS_ONLY */ \
 OOP_NEWLINE \
 OOP_NEWLINE \
 CLASS(name, \

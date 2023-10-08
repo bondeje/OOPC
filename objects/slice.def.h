@@ -1,16 +1,18 @@
 #include <oopc.h>
-#define OMIT_STRUCT_DECLS
+#define IMPORT_CLASS_DEFS_ONLY
 #include <iteration.h>
-#undef OMIT_STRUCT_DECLS
+#undef IMPORT_CLASS_DEFS_ONLY
 
 INCLUDE <stddef.h>
 INCLUDE <iteration.h>
 INCLUDE_OOPC
 
+IFNDEF IMPORT_CLASS_DEFS_ONLY
 TYPEDEF(struct Slice, Slice)
 TYPEDEF(struct SliceIterator, SliceIterator)
 int SliceIterator_iter(void *, void *);
 int SliceIterator_next(void *, void *);
+ENDIF
 
 // some of these would belong in a utility setup or just push to oopc.h. Some are also defined in sequence.h
 DEFINE IS_NEG(x) (!((x) > 0) && ((x) != 0))

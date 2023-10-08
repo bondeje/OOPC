@@ -2,7 +2,10 @@
 IFNDEF CONTAINER_H
 DEFINE CONTAINER_H
 
+IFNDEF IMPORT_CLASS_DEFS_ONLY
 INCLUDE <stdbool.h>
+ENDIF
+
 INCLUDE_OOPC
 
 DEFINE CONTAINS(type, pinst, parg) SPLIT(OOP_INTERFACE)(type, *pinst, Container).contains(pinst, parg)

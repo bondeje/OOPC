@@ -23,7 +23,7 @@ DEL_FILE =
 ifeq ($(UNAME), Linux)
 	# STILL NEED TO MAKE A LINUX SCRIPT
 else
-	CLEAN_SCRIPT += ..\..\scripts\rep_nl_tab_win.bat
+	CLEAN_SCRIPT += ..\..\scripts\rep_nl_tab.exe
 	EXT = .exe
 	DEL_FILE = del /f
 endif

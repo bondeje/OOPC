@@ -2,7 +2,6 @@
 IFNDEF CREATABLE_H
 DEFINE CREATABLE_H
 
-INCLUDE <initializable.h>
 INCLUDE_OOPC
 
 /** convenience macros for creating, instantiating, and deleting an instance. Only works if type implements creatable as an interface */

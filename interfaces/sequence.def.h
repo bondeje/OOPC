@@ -31,12 +31,13 @@ CLASS(Sequence,
 // extend adds the 2nd MutableSequence to the First
 CLASS(MutableSequence,
     FUNCTION(NULL, int, push, void *, void *)
-    FUNCTION(NULL, int, insert, void *, void *, size_t)
+    FUNCTION(NULL, int, insert, void *, size_t, void *)
     FUNCTION(NULL, int, extend, void *, void *)
     FUNCTION(NULL, int, peek, void *, void *)
     FUNCTION(NULL, int, pop, void *, void *)
     FUNCTION(NULL, int, remove, void *, size_t, void *)
-    EXTENDS(Sequence)
+    FUNCTION(NULL, size_t, capacity, void *)
+    FUNCTION(NULL, int, resize, void *, size_t)
 )
 
 ENDIF // SEQUENCE_H

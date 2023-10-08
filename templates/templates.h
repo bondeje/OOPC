@@ -6,3 +6,10 @@
 
 #define TEMPLATE(name, ...) TEMPLATE_##name(__VA_ARGS__)
 #define TEMPLATE_IMPLEMENTATION(name, ...) TEMPLATE_IMPLEMENTATION_##name(__VA_ARGS__)
+
+# ifndef OOP_MEMBER_void 
+    # define OOP_MEMBER_void( x ) x 
+#endif 
+#ifndef OOP_MEMBER_pvoid 
+ 	# define OOP_MEMBER_pvoid( x ) x 
+#endif 

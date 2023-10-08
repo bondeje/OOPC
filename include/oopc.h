@@ -21,21 +21,21 @@
 #define IS_MEMBER_TYPE(type, ...) EQUAL(MEMBER_TYPE, type)
 #define MEMBER_(decl, type, name, value, size) (decl, type, name, value, size)
 #define MEMBER_2(type, name) (MEMBER_TYPE, MEMBER_(type name;, type, name, (OOP_NO_DEFAULT), sizeof(type)))
-#define MEMBER_3(type, name, value) (MEMBER_TYPE, MEMBER_(type name;, type, name, (OOP_IF(IS_PAREN(value()))(OOP_NO_DEFAULT, value)), sizeof(type)))
+#define MEMBER_3(type, name, value) (MEMBER_TYPE, MEMBER_(type name;, type, name, (value), sizeof(type)))
 #define MEMBER(...) CAT(MEMBER, VARIADIC_SIZE(__VA_ARGS__))(__VA_ARGS__)
 
 #define ARRAY_MEMBER_3(type, name, array_size) (MEMBER_TYPE, MEMBER_(type name[array_size];, type, name, OOP_NO_DEFAULT, array_size * sizeof(type)))
-#define ARRAY_MEMBER_4(type, name, value, array_size) (MEMBER_TYPE, MEMBER_(type name[array_size];, type, name, (OOP_IF(IS_PAREN(value()))(OOP_NO_DEFAULT, value)), array_size * sizeof(type)))
+#define ARRAY_MEMBER_4(type, name, value, array_size) (MEMBER_TYPE, MEMBER_(type name[array_size];, type, name, (value), array_size * sizeof(type)))
 #define ARRAY_MEMBER(...) CAT(ARRAY_MEMBER, VARIADIC_SIZE(__VA_ARGS__))(__VA_ARGS__)
 
 #define OOP_MEMBER_CLASS_MEMBER_TYPE(x) x
 #define IS_CLASS_MEMBER_TYPE(type, ...) EQUAL(CLASS_MEMBER_TYPE, type)
 #define CLASS_MEMBER_2(type, name) (CLASS_MEMBER_TYPE, MEMBER_(type name;, type, name, OOP_NO_DEFAULT, sizeof(type)))
-#define CLASS_MEMBER_3(type, name, value) (CLASS_MEMBER_TYPE, MEMBER_(type name;, type, name, (OOP_IF(IS_PAREN(value()))(OOP_NO_DEFAULT, value)), sizeof(type)))
+#define CLASS_MEMBER_3(type, name, value) (CLASS_MEMBER_TYPE, MEMBER_(type name;, type, name, (value), sizeof(type)))
 #define CLASS_MEMBER(...) CAT(CLASS_MEMBER, VARIADIC_SIZE(__VA_ARGS__))(__VA_ARGS__)
 
 #define ARRAY_CLASS_MEMBER_3(type, name, array_size) (CLASS_MEMBER_TYPE, MEMBER_(type name;, type, name, OOP_NO_DEFAULT, array_size * sizeof(type)))
-#define ARRAY_CLASS_MEMBER_4(type, name, value, array_size) (CLASS_MEMBER_TYPE, MEMBER_(type name[array_size];, type, name, (OOP_IF(IS_PAREN(value()))(OOP_NO_DEFAULT, value)), array_size * sizeof(type)))
+#define ARRAY_CLASS_MEMBER_4(type, name, value, array_size) (CLASS_MEMBER_TYPE, MEMBER_(type name[array_size];, type, name, (value), array_size * sizeof(type)))
 #define ARRAY_CLASS_MEMBER(...) CAT(ARRAY_CLASS_MEMBER, VARIADIC_SIZE(__VA_ARGS__))(__VA_ARGS__)
 
 #define FUNCTION_POINTER(ret, name, ...) ret LPAREN() * name RPAREN() LPAREN() __VA_ARGS__ RPAREN()
@@ -91,6 +91,8 @@
 #define IS_CLASS_MEMBER(type, ...) ANY(EQUAL(INTERFACE_TYPE, type), EQUAL(CLASS_MEMBER_TYPE, type), EQUAL(CLASS_FUNCTION_TYPE, type))
 #define IS_FUNCTION(type, ...) OOP_OR(EQUAL(FUNCTION_TYPE, type), EQUAL(CLASS_FUNCTION_TYPE, type))
 
+#define OOP_MEMBER_NONE(x) x
+
 #define GET_NAME(type, type_ds) T_INSPECT_2 type_ds
 #define GET_DECL(type, type_ds) T_INSPECT_0 type_ds
 #define GET_VALUE(type, type_ds) T_INSPECT_3 type_ds
@@ -115,10 +117,12 @@
 
 #define OOP_INIT_REQS(name, inst, seq) OOP_TAB inst->class__ = &OOP_CLASS_INST(name); OOP_NEWLINE G_JOIN(PASS_ARGS, G_TO_G_A(MAKE_INIT, inst, G_FILTER(IS_PARENT_TYPE, S_TO_G(seq))))
 #define OOP_CLASS_INST(name) PASS_ARGS(TYPE_NAME EMPTY()(CLASS_MANGLE(name)))
+
+// pretty sure this is unused. There is no guarantee of a member ".init"
 #define MAKE_INIT(inst, type, type_ds) OOP_TAB SPLIT(OOP_CLASS_INST)(T_INSPECT_1 type_ds).init(&(inst-> SPLIT(TYPE_NAME)(T_INSPECT_1 type_ds))); OOP_NEWLINE
 
 #define OOP_CLASS_STRUCT_DECLS(name, seq) \
-IFNDEF OMIT_STRUCT_DECLS \
+IFNDEF IMPORT_CLASS_DEFS_ONLY \
 OOP_NEWLINE \
 TYPEDEF(struct name, name) \
 OOP_NEWLINE \
@@ -138,7 +142,7 @@ OOP_NEWLINE \
 OOP_NEWLINE \
 }; \
 OOP_NEWLINE \
-ENDIF // OMIT_STRUCT_DECLS
+ENDIF /* IMPORT_CLASS_DEFS_ONLY */ \
 
 // TODO: try to reuse EXTERNAL_CLASS(name, seq) and just append the structure definition
 #define CLASS_(name, seq)\
